@@ -371,9 +371,9 @@
 
     <div class="upload-section card">
         <h2>1. 挑戦直前画像アップロード</h2>
-        <label for="imageUpload">バトル開始直前のスクリーンショットを6枚または7枚選択してください (PNG, JPG):</label>
+        <label for="imageUpload">バトル開始直前のスクリーンショットを3枚から7枚選択してください (PNG, JPG):</label>
         <input type="file" id="imageUpload" multiple accept="image/png, image/jpeg">
-        <p class="info">※ギルド大会は7枚、個人リーグは6枚です。ファイル名が若い順（昇順）に処理されます。</p>
+        <p class="info">※6枚または7枚の場合は「予選/本戦」表示、3-5枚の場合は「第X試合」表示となります。ファイル名が若い順（昇順）に処理されます。</p>
         <div id="fileList"></div>
     </div>
 
@@ -545,19 +545,13 @@
                 downloadLink.style.display = 'none'; // Hide download link
                 resultCanvas.height = 0; // Clear canvas preview by reducing its height
 
-                if (files.length < 1 || files.length > 7) {
-                    alert('1枚以上7枚以下の画像を選択してください。');
+                // ファイル枚数制限を3-7枚に更新
+                if (files.length < 3 || files.length > 7) {
+                    alert('3枚から7枚の画像を選択してください。');
                     imageUpload.value = ''; // Reset file input
                     sortedFiles = [];
                     return;
                 }
-
-                if (files.length !== 6 && files.length !== 7) {
-                     alert('6枚または7枚の画像を選択してください。\n(個人リーグは6枚、ギルド大会は7枚です)');
-                     imageUpload.value = '';
-                     sortedFiles = [];
-                     return;
-                 }
 
                 sortedFiles = files.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -617,8 +611,9 @@
                     return (index < 4) ? `予選 第${index + 1}試合` : `本戦 第${index - 3}試合`;
                 } else if (totalImages === 6) { // 個人リーグ
                     return (index < 3) ? `予選 第${index + 1}試合` : `本戦 第${index - 2}試合`;
+                } else { // 3～5枚の場合
+                    return `第${index + 1}試合`;
                 }
-                return `試合 ${index + 1}`; // その他の枚数の場合
             }
 
 
@@ -701,8 +696,8 @@
                 const numImages = sortedFiles.length;
                 const userComment = commentInput.value.trim(); // ひとこと欄のテキストを取得
 
-                if (numImages < 1 || numImages > 7 || imageDimensions.width === 0) {
-                    alert('画像が正しく選択されていないか、画像の解像度が取得できていません。');
+                if (numImages < 3 || numImages > 7 || imageDimensions.width === 0) {
+                    alert('画像が正しく選択されていないか、画像の解像度が取得できていません。\n(3枚から7枚の画像を選択してください)');
                     return;
                 }
                 generateButton.disabled = true;
