@@ -19,6 +19,25 @@
             line-height: 1.6;
             font-size: 16px; /* Base font size for rem calculation */
         }
+        /* Moved main heading outside container */
+        .main-title {
+            text-align: center;
+            margin-top: 1.5rem; /* Adjust margin as needed */
+            margin-bottom: 1.5rem;
+        }
+        .main-title h1 {
+            font-size: 2.25rem; /* Slightly smaller base font for h1, adjusted to 36px */
+            font-weight: 800; /* extrabold */
+            color: #374151; /* gray-800 */
+            /* Tailwind's bg-clip-text etc. can be applied directly if not using h1's font-size directly */
+        }
+        /* Responsive font size for h1 */
+        @media (min-width: 768px) { /* md breakpoint */
+            .main-title h1 {
+                font-size: 2.5rem; /* 40px for larger screens */
+            }
+        }
+
         .container {
             max-width: 900px; /* Adjusted for wider content on mobile */
             margin: auto;
@@ -133,12 +152,12 @@
             box-sizing: border-box; /* パディングを含めて幅を計算 */
         }
         .author-info h3 {
-            font-size: 1.25rem; /* text-xl */
+            font-size: 1.1rem; /* Adjusted for smaller size */
             font-weight: bold;
             margin-bottom: 0.75rem;
         }
         .author-info p {
-            font-size: 0.95rem;
+            font-size: 0.85rem; /* Adjusted for smaller size */
             line-height: 1.6; /* Adjusted line-height */
             margin-bottom: 0.8rem; /* remに変更 (行間のスペースを広げる) */
         }
@@ -155,7 +174,7 @@
             gap: 0.5rem; /* 要素間のスペース */
             flex-wrap: wrap; /* 小さい画面で折り返す */
             margin-top: 1.5rem; /* バージョン情報の上部にスペースを追加 */
-            font-size: 0.875rem; /* text-sm */
+            font-size: 0.8rem; /* Adjusted for smaller size */
             color: #64748b; /* slate-500 */
             text-align: center; /* Centered */
             border-top: none; /* Remove border from previous footer */
@@ -167,13 +186,13 @@
     </style>
 </head>
 <body class="p-4">
-    <div class="container flex flex-col items-center space-y-6">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-4 text-center">
-            <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600">
-                DQTガチャ画像連結
-            </span>
+    <div class="main-title">
+        <h1 class="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600">
+            DQTガチャ画像連結
         </h1>
+    </div>
 
+    <div class="container flex flex-col items-center space-y-6">
         <div class="w-full flex flex-col items-center justify-center space-y-3 md:space-y-0 md:space-x-4">
             <label for="imageUpload" class="file-input-label inline-flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -229,18 +248,16 @@
             </svg>
             画像をダウンロード
         </button>
-
-        <div class="author-info">
-            <h3>作者 ( <a href="https://x.com/jmazeppa" target="_blank" rel="noopener noreferrer">@jmazeppa</a> ) より</h3>
-            <p>xでガチャ画像を4枚までしかあげれないので、全部入りをあげれるように作ってみました。</p>
-            <p>なおこのツールは、アップロードされた画像をサーバーに送信したり、収集したりすることはありません。すべての画像処理は、お使いのブラウザ内（JavaScript）で完結していますので、ご安心ください。また、このHTMLコードはGoogleのGeminiによって生成されました。</p>
-            <div class="version-info">
-                <p>最終更新日: 2025/06/07 バージョン: 1.0.0</p>
-            </div>
-        </div>
     </div>
 
-    <!-- Removed the old footer as its content is now part of author-info -->
+    <div class="author-info">
+        <h3>作者 ( <a href="https://x.com/jmazeppa" target="_blank" rel="noopener noreferrer">@jmazeppa</a> ) より</h3>
+        <p>xでガチャ画像を4枚までしかあげれないので、全部入りをあげれるように作ってみました。</p>
+        <p>なおこのツールは、アップロードされた画像をサーバーに送信したり、収集したりすることはありません。すべての画像処理は、お使いのブラウザ内（JavaScript）で完結していますので、ご安心ください。また、このHTMLコードはGoogleのGeminiによって生成されました。</p>
+        <div class="version-info">
+            <p>最終更新日: 2025/06/07 バージョン: 1.0.0</p>
+        </div>
+    </div>
 
     <script>
         // Get DOM elements
