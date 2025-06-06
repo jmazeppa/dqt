@@ -26,16 +26,10 @@
             margin-bottom: 1.5rem;
         }
         .main-title h1 {
-            font-size: 2.25rem; /* Slightly smaller base font for h1, adjusted to 36px */
+            font-size: clamp(1.5rem, 4.5vw, 2.2rem); /* Adjusted font-size with clamp */
             font-weight: 800; /* extrabold */
-            color: #374151; /* gray-800 */
-            /* Tailwind's bg-clip-text etc. can be applied directly if not using h1's font-size directly */
-        }
-        /* Responsive font size for h1 */
-        @media (min-width: 768px) { /* md breakpoint */
-            .main-title h1 {
-                font-size: 2.5rem; /* 40px for larger screens */
-            }
+            /* Using gradient from Tailwind classes on HTML element directly */
+            color: transparent; /* Makes text transparent to show background gradient */
         }
 
         .container {
@@ -141,15 +135,16 @@
             margin-top: 3rem; /* remに変更 */
             padding-top: 1.25rem; /* remに変更 */
             border-top: 1px solid #e0e0e0;
-            font-size: 0.85rem; /* remに変更 */
+            /* Adjusted padding and max-width for better fit on mobile */
+            padding-left: 1rem;
+            padding-right: 1rem;
+            max-width: 800px; /* Aligns with container for consistent width */
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 0.85rem; /* Base font for this section */
             color: #666;
-            text-align: left; /* 左揃え */
-            padding-left: 5%; /* 左に5%の余白 */
-            padding-right: 5%; /* 右に5%の余白 */
-            max-width: 90%; /* コンテンツの最大幅を90%に制限 */
-            margin-left: auto; /* 中央寄せ */
-            margin-right: auto; /* 中央寄せ */
-            box-sizing: border-box; /* パディングを含めて幅を計算 */
+            text-align: left;
+            box-sizing: border-box; /* Ensures padding is included in the width */
         }
         .author-info h3 {
             font-size: 1.1rem; /* Adjusted for smaller size */
@@ -174,7 +169,7 @@
             gap: 0.5rem; /* 要素間のスペース */
             flex-wrap: wrap; /* 小さい画面で折り返す */
             margin-top: 1.5rem; /* バージョン情報の上部にスペースを追加 */
-            font-size: 0.8rem; /* Adjusted for smaller size */
+            font-size: 0.75rem; /* Adjusted for smaller size */
             color: #64748b; /* slate-500 */
             text-align: center; /* Centered */
             border-top: none; /* Remove border from previous footer */
