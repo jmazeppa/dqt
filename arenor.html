@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DQT 闘技場まとめ画像生成</title>
+    <style type="text/css">
+        /* style.cssの内容をここに埋め込みます */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding-top: 1rem; /* remに変更 */
+            padding-bottom: 3rem; /* remに変更。アドレスバーで隠れないように少し増やす */
+            padding-left: 0.5rem; /* 左パディングを調整 */
+            padding-right: 0.5rem; /* 右パディングを調整 */
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            font-size: 16px; /* ベースフォントサイズをremの基準として設定 */
+        }
+
+        h1, h2 {
+            color: #007bff;
+            margin-bottom: 0.5em; /* 相対単位 */
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 1em; /* 相対単位 */
+            font-size: clamp(1.5rem, 4.5vw, 2.2rem); /* 最小、推奨、最大サイズに調整 */
+        }
+        h2 {
+            font-size: clamp(1.2rem, 3.8vw, 1.8rem); /* 最小、推奨、最大サイズに調整 */
+        }
+
+        .card {
+            background-color: #fff;
+            padding: 1.5rem; /* remに変更 */
+            margin-bottom: 1.5rem; /* remに変更 */
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .info {
+            font-size: 0.85rem; /* remに変更 */
+            color: #555;
+            margin-top: 0.5rem; /* remに変更 */
+        }
+
+        #imageUpload {
+            display: block;
+            margin-top: 1rem; /* remに変更 */
+            padding: 0.8rem; /* remに変更 */
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            font-size: 0.9rem; /* remに変更 */
+            /* iPhone13ではみ出ないように横幅を調整 */
+            width: calc(100% - 1.6rem); /* padding分を考慮して100%から引く */
+            max-width: 400px; /* ある程度の最大幅を設定（デスクトップでの過度な拡大を防止） */
+            box-sizing: border-box; /* パディングを含めて幅を計算 */
+        }
+        /* スマートフォン向けにさらに調整が必要な場合 */
+        @media (max-width: 400px) { /* iPhone 13 Proの幅など、スマホの実際の幅を想定 */
+            #imageUpload {
+                width: calc(100% - 1.6rem); /* 画面幅のほとんどを使うが、パディング分を引く */
+            }
+        }
+
+
+        #fileList {
+            margin-top: 1rem; /* remに変更 */
+            font-size: 0.85rem; /* remに変更 */
+        }
+        #fileList div {
+            padding: 0.3rem; /* remに変更 */
+            border-bottom: 1px solid #eee;
+        }
+        #fileList div:last-child {
+            border-bottom: none;
+        }
+        #fileList ol {
+            padding-left: 1.25rem; /* remに変更 */
+            margin-top: 0.5rem; /* remに変更 */
+        }
+        #fileList li {
+            margin-bottom: 0.2rem; /* remに変更 */
+        }
+
+        .row-setting {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.8rem; /* remに変更 */
+            padding: 0.8rem; /* remに変更 */
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            flex-wrap: wrap; /* スマートフォンで要素が折り返すように */
+        }
+
+        /* 試合名とファイル名を囲むコンテナ */
+        .row-setting .match-file-info {
+            display: flex; /* 横並びにする */
+            align-items: baseline; /* テキストのベースラインを揃える */
+            flex-wrap: wrap; /* 必要なら折り返す */
+            margin-right: 1rem; /* 後続の要素との間にスペース */
+            flex-grow: 1; /* 残りスペースを占める */
+            min-width: 200px; /* ある程度の最小幅を確保 */
+        }
+
+        .row-setting .match-name-display {
+            font-size: 0.9rem; /* remに変更 */
+            font-weight: bold;
+            color: #0056b3;
+            white-space: nowrap; /* 改行しない */
+            margin-right: 0.25rem; /* ファイル名との間隔 */
+            flex-shrink: 0;
+        }
+
+        .row-setting .file-name-display {
+            font-size: 0.9rem; /* remに変更 */
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap; /* 改行しない */
+            flex-shrink: 1; /* 必要なら縮小 */
+            min-width: 50px; /* 縮小しすぎないように */
+        }
+
+        /* ポイント設定部分を囲むコンテナ */
+        .row-setting .points-setting {
+            display: flex; /* 横並びにする */
+            align-items: center;
+            flex-shrink: 0; /* 縮小させない */
+            white-space: nowrap; /* 改行しない */
+        }
+
+        .row-setting label {
+            margin-right: 0.5rem; /* remに変更 */
+            font-size: 0.9rem; /* remに変更 */
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .row-setting select {
+            padding: 0.5rem 0.8rem; /* remに変更 */
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 0.9rem; /* remに変更 */
+            min-width: 60px; /* Selectボックスの最小幅 */
+            flex-shrink: 0;
+        }
+
+        /* row-settingの子要素が折り返した際の調整 */
+        @media (max-width: 600px) {
+            .row-setting {
+                flex-direction: column; /* スマートフォンでは縦に並べる */
+                align-items: flex-start; /* 左寄せ */
+            }
+            .row-setting .match-file-info {
+                margin-right: 0;
+                margin-bottom: 0.5rem;
+                width: 100%; /* 幅を100%に */
+            }
+            .row-setting .points-setting {
+                margin-bottom: 0; /* 不要なマージンをリセット */
+                width: 100%; /* 幅を100%に */
+                justify-content: flex-start; /* 左揃え */
+            }
+        }
+
+
+        .crop-settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* 画面幅に応じて列数を自動調整、少し広げる */
+            gap: 1rem; /* remに変更 */
+            margin-top: 1rem; /* remに変更 */
+        }
+
+        .crop-settings-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem; /* remに変更 */
+            /* ボタンと入力フィールドを囲むためのコンテナ */
+            padding: 0.5rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .crop-settings-item label {
+            flex-shrink: 0;
+            font-size: 1rem; /* remに変更 */
+            color: #333;
+            margin-right: auto; /* ラベルと入力/ボタンの間にスペースを自動挿入 */
+        }
+
+        /* Input とボタンのグループ化 */
+        .input-with-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem; /* ボタンと入力フィールドの間のスペース */
+        }
+
+        .input-with-buttons input[type="number"] {
+            padding: 0.5rem; /* remに変更 */
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem; /* フォントサイズを少し大きくしてタップしやすく */
+            width: 45px; /* ここを調整して横幅を狭くする */
+            height: 2.2rem; /* 高さも確保してタップしやすく */
+            box-sizing: border-box; /* パディングを含めて幅を計算 */
+            text-align: center; /* 数字を中央寄せ */
+            -moz-appearance: textfield; /* Firefoxでスピンボタンを非表示 */
+        }
+        /* Chrome/Safariなどでスピンボタンを非表示にする */
+        .input-with-buttons input[type="number"]::-webkit-outer-spin-button,
+        .input-with-buttons input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .input-with-buttons button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 2.2rem; /* ボタンのサイズを調整 */
+            height: 2.2rem; /* ボタンのサイズを調整 */
+            font-size: 1.2rem; /* ボタン内の文字サイズ */
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0; /* 縮小させない */
+            transition: background-color 0.2s ease;
+        }
+
+        .input-with-buttons button:hover {
+            background-color: #0056b3;
+        }
+        .input-with-buttons button:active {
+            background-color: #004080;
+        }
+
+
+        .crop-settings-item span.unit {
+            font-size: 0.85rem; /* remに変更 */
+            color: #555;
+            margin-left: 0.5rem; /* 単位とボタンの間隔 */
+        }
+
+        /* ひとこと入力欄 */
+        #commentSection {
+            margin-top: 1.5rem; /* ひとことセクションの上マージンを調整 */
+            margin-bottom: 1rem; /* 下マージンを追加 */
+        }
+        #commentInput {
+            width: 80%; /* 幅を調整 */
+            min-height: 3rem; /* 高さを調整 */
+            padding: 0.5rem; /* パディングを調整 */
+            margin-top: 0.3rem; /* さらに上マージンを調整 */
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem; /* フォントサイズを少し小さく */
+            font-family: "Meiryo", "メイリオ", sans-serif; /* メイリオ書体 */
+            box-sizing: border-box; /* パディングを含めて幅を計算 */
+        }
+        #commentSection .info {
+            margin-top: 0.2rem; /* infoテキストのマージンを調整 */
+            font-size: 0.75rem; /* infoテキストのサイズをさらに小さく */
+        }
+
+
+        #generateButton {
+            background-color: #28a745;
+            color: white;
+            padding: 0.8rem 1.5rem; /* remに変更 */
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1rem; /* remに変更 */
+            transition: background-color 0.2s ease;
+            display: block;
+            margin: 0 auto;
+        }
+
+        #generateButton:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        #generateButton:hover:not(:disabled) {
+            background-color: #218838;
+        }
+
+        #resultCanvas {
+            border: 2px dashed #007bff;
+            margin-top: 1.5rem; /* remに変更 */
+            max-width: 100%;
+            height: auto;
+            display: block;
+            background-color: #fff;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #downloadLink {
+            display: none;
+            margin: 1.5rem auto 0 auto; /* remに変更 */
+            padding: 0.8rem 1.2rem; /* remに変更 */
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 1.05rem; /* remに変更 */
+            width: fit-content;
+            transition: background-color 0.2s ease;
+        }
+
+        #downloadLink:hover {
+            background-color: #0056b3;
+        }
+
+        .author-info {
+            margin-top: 3rem; /* remに変更 */
+            padding-top: 1.25rem; /* remに変更 */
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.85rem; /* remに変更 */
+            color: #666;
+            /* テキストの余白と左揃え */
+            text-align: left; /* 左揃え */
+            padding-left: 5%; /* 左に5%の余白 */
+            padding-right: 5%; /* 右に5%の余白 */
+            max-width: 90%; /* コンテンツの最大幅を90%に制限 */
+            margin-left: auto; /* 中央寄せ */
+            margin-right: auto; /* 中央寄せ */
+            box-sizing: border-box; /* パディングを含めて幅を計算 */
+        }
+        /* 必要であれば、小さな画面での余白を調整することも可能 */
+        @media (max-width: 600px) {
+            .author-info {
+                padding-left: 2%; /* さらに狭い画面では余白を小さく */
+                padding-right: 2%;
+                max-width: 96%;
+            }
+        }
+
+
+        .author-info p {
+            margin-bottom: 0.8rem; /* remに変更 (行間のスペースを広げる) */
+        }
+        /* 新しいスタイル: 最終更新日とバージョン情報を1行で表示 */
+        .author-info .version-info {
+            display: flex;
+            justify-content: center; /* 中央揃えを維持 */
+            gap: 0.5rem; /* 要素間のスペース */
+            flex-wrap: wrap; /* 小さい画面で折り返す */
+            margin-top: 1.5rem; /* バージョン情報の上部にスペースを追加 */
+        }
+        .author-info .version-info p {
+            margin: 0; /* マージンをリセット */
+        }
+
+    </style>
+</head>
+<body>
+    <h1>DQT 闘技場まとめ画像生成</h1>
+
+    <div class="upload-section card">
+        <h2>1. 挑戦直前画像アップロード</h2>
+        <label for="imageUpload">バトル開始直前のスクリーンショットを6枚または7枚選択してください (PNG, JPG):</label>
+        <input type="file" id="imageUpload" multiple accept="image/png, image/jpeg">
+        <p class="info">※ギルド大会は7枚、個人リーグは6枚です。ファイル名が若い順（昇順）に処理されます。</p>
+        <div id="fileList"></div>
+    </div>
+
+    <div class="settings-section card">
+        <h2>2. 各試合の戦績ポイント設定</h2>
+        <div id="rowsContainer">
+            <p class="info">画像をアップロードすると、ここに設定が表示されます。</p>
+        </div>
+
+        <h2>3. PT切り出し位置の調整</h2>
+        <p class="info">アップロードするスクリーンショットの解像度に合わせて、以下の値を調整してください。画像の横幅に対する割合で指定します。<br>
+        <small>※iPhone 13 (縦持ち) の場合、デフォルト値が推奨されます。</small></p>
+        <div class="crop-settings-grid">
+            <div class="crop-settings-item">
+                <label for="cropSx">PT開始位置X:</label>
+                <div class="input-with-buttons">
+                    <button class="decrement-btn" data-target="cropSx">-</button>
+                    <input type="number" id="cropSx" value="11" min="0" max="40">
+                    <button class="increment-btn" data-target="cropSx">+</button>
+                </div>
+                <span class="unit">%</span>
+            </div>
+            <div class="crop-settings-item">
+                <label for="cropSOpponentY">相手開始位置Y:</label>
+                <div class="input-with-buttons">
+                    <button class="decrement-btn" data-target="cropSOpponentY">-</button>
+                    <input type="number" id="cropSOpponentY" value="35" min="0" max="100">
+                    <button class="increment-btn" data-target="cropSOpponentY">+</button>
+                </div>
+                <span class="unit">%</span>
+            </div>
+            <div class="crop-settings-item">
+                <label for="cropSHeight">PT縦幅 Y割合:</label>
+                <div class="input-with-buttons">
+                    <button class="decrement-btn" data-target="cropSHeight">-</button>
+                    <input type="number" id="cropSHeight" value="10" min="1" max="50">
+                    <button class="increment-btn" data-target="cropSHeight">+</button>
+                </div>
+                <span class="unit">%</span>
+            </div>
+            <div class="crop-settings-item">
+                <label for="cropSSelfY">自分開始位置Y:</label>
+                <div class="input-with-buttons">
+                    <button class="decrement-btn" data-target="cropSSelfY">-</button>
+                    <input type="number" id="cropSSelfY" value="49" min="0" max="100">
+                    <button class="increment-btn" data-target="cropSSelfY">+</button>
+                </div>
+                <span class="unit">%</span>
+            </div>
+        </div>
+
+        <div id="commentSection">
+            <h2>4. ひとこと(任意)</h2>
+            <textarea id="commentInput" placeholder="ここにコメントを入力してください"></textarea>
+            <p class="info">生成画像の下部に表示されます。</p>
+        </div>
+
+    </div>
+
+    <div class="action-section card">
+        <h2>5. 戦績まとめ画像生成</h2>
+        <button id="generateButton" disabled>画像を生成 ✨</button>
+    </div>
+
+    <div class="result-section card">
+        <h2>生成結果 プレビュー</h2>
+        <canvas id="resultCanvas"></canvas>
+        <a id="downloadLink">画像をダウンロード 💾</a>
+    </div>
+
+    <div class="author-info">
+        <h3>作者 ( <a href="https://x.com/jmazeppa" target="_blank" rel="noopener noreferrer">@jmazeppa</a> ) より</h3>
+        <p>”Tact Arenor”は、闘技場(Arena)を楽しむタクターという意味の造語です。</p>
+        <p>ギルド大会などの闘技場の攻めまとめ画像を簡単に作成するために作りましたが、防衛は人によって見せたいモノが変わる事もあり、ひとこと欄で勘弁してください。</p>
+        <p>なおこのツールは、アップロードされた画像をサーバーに送信したり、収集したりすることはありません。すべての画像処理は、お使いのブラウザ内（JavaScript）で完結していますので、ご安心ください。また、このHTMLコードはGoogleのGeminiによって生成されました。</p>
+        <div class="version-info">
+            <p>最終更新日: 2025/05/31</p>
+            <p>バージョン: 1.1.1</p>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            const imageUpload = document.getElementById('imageUpload');
+            const fileListDiv = document.getElementById('fileList');
+            const rowsContainer = document.getElementById('rowsContainer');
+            const generateButton = document.getElementById('generateButton');
+            const resultCanvas = document.getElementById('resultCanvas');
+            const downloadLink = document.getElementById('downloadLink');
+            const ctx = resultCanvas.getContext('2d');
+            const commentInput = document.getElementById('commentInput');
+
+            // 切り出し設定のInput要素
+            const cropSxInput = document.getElementById('cropSx');
+            const cropSOpponentYInput = document.getElementById('cropSOpponentY');
+            const cropSSelfYInput = document.getElementById('cropSSelfY');
+            const cropSHeightInput = document.getElementById('cropSHeight');
+
+            let sortedFiles = [];
+            let imageDimensions = { width: 0, height: 0 }; // 最初の画像の解像度を保持
+
+            // --- 出力レイアウト設定 (これらは動的に設定) ---
+            let FINAL_CANVAS_WIDTH = 0; // 入力画像の幅に基づいて動的に設定
+            const CANVAS_PADDING = 25; // パディング (上、右、下、左) - 調整
+            const SPACE_BETWEEN_ELEMENTS = 15; // 要素間のスペース
+
+            // ★MATCH_NAME_WIDTH の再調整: 試合名の表示に必要な幅を確保
+            const INITIAL_MATCH_NAME_WIDTH = 150; // 試合名にこれだけの幅を確保 (ピクセル)
+            let MATCH_NAME_WIDTH = INITIAL_MATCH_NAME_WIDTH; // 動的に設定されるが、初期値として
+
+            let DEST_ICON_STRIP_WIDTH = 0; // FINAL_CANVAS_WIDTHに基づいて動的に設定
+            // DEST_ICON_STRIP_HEIGHT は動的に計算されます
+
+            const POINTS_AREA_WIDTH_RATIO = 0.15; // 獲得戦績表示領域の幅の比率
+            let POINTS_AREA_WIDTH = 0; // 動的に設定
+            let POINTS_TEXT_SIZE = 24; // ポイントの文字サイズ (動的に調整される可能性あり)
+
+            const HEADER_TEXT_Y_OFFSET = 50; // Y位置のオフセット (上からの距離)
+            let HEADER_TEXT_SIZE = 18; // ヘッダーの文字サイズ (動的に調整される可能性あり)
+            let COPYRIGHT_TEXT_SIZE = 12; // 作成日テキストのサイズ (動的に調整される可能性あり)
+            let COMMENT_TEXT_SIZE = 18; // ひとことテキストのサイズ (予選/本戦と同じくらい)
+            const COMMENT_LINE_HEIGHT_FACTOR = 1.5; // コメントの行の高さの比率
+            
+            // ★コメントエリアと著作権表示の間の余白を再度調整 (ひとことの出力位置)
+            // 以前「コメント上部の余白: COMMENT_AREA_BOTTOM_MARGIN の値を調整し、コメントエリア全体の高さを計算する際に commentAreaDrawingHeight を増やすことで、加工画像からの距離を倍程度に広げました。」という状態を再現
+            let COMMENT_AREA_MARGIN_AFTER_LAST_ROW = 50; // 最後の画像行の下端からコメントの開始Yまでのマージンを調整
+            let COMMENT_AREA_BOTTOM_MARGIN = 60; // コメントエリアと著作権表示の間の余白
+
+            // ヘッダー部分を除いた、最初のデータ行のY開始位置
+            let ROW_CONTENT_Y_START = HEADER_TEXT_Y_OFFSET + HEADER_TEXT_SIZE + 30; // ヘッダーテキストの下にスペース
+            const ROW_SPACING = 15; // 行間のスペース
+            // ROW_HEIGHT は動的に計算されます
+
+            let FINAL_CANVAS_HEIGHT = 0; // 全体の高さは動的に計算されます
+            // -------------------------
+
+            imageUpload.addEventListener('change', handleFiles);
+            generateButton.addEventListener('click', generateImage);
+
+            // 増減ボタンのイベントリスナー設定
+            document.querySelectorAll('.increment-btn, .decrement-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const targetId = event.target.dataset.target;
+                    const inputElement = document.getElementById(targetId);
+                    if (inputElement) {
+                        let currentValue = parseFloat(inputElement.value);
+                        const min = parseFloat(inputElement.min);
+                        const max = parseFloat(inputElement.max);
+                        const step = 1; // 1ずつ増減
+
+                        if (event.target.classList.contains('increment-btn')) {
+                            currentValue += step;
+                            if (currentValue > max) currentValue = max;
+                        } else if (event.target.classList.contains('decrement-btn')) {
+                            currentValue -= step;
+                            if (currentValue < min) currentValue = min;
+                        }
+                        inputElement.value = currentValue;
+                    }
+                });
+            });
+
+
+            function handleFiles(event) {
+                const files = Array.from(event.target.files);
+                fileListDiv.innerHTML = ''; // Clear previous file list
+                rowsContainer.innerHTML = '<p class="info">画像をアップロードすると、ここに設定が表示されます。</p>'; // Reset settings UI
+                generateButton.disabled = true;
+                downloadLink.style.display = 'none'; // Hide download link
+                resultCanvas.height = 0; // Clear canvas preview by reducing its height
+
+                if (files.length < 1 || files.length > 7) {
+                    alert('1枚以上7枚以下の画像を選択してください。');
+                    imageUpload.value = ''; // Reset file input
+                    sortedFiles = [];
+                    return;
+                }
+
+                if (files.length !== 6 && files.length !== 7) {
+                     alert('6枚または7枚の画像を選択してください。\n(個人リーグは6枚、ギルド大会は7枚です)');
+                     imageUpload.value = '';
+                     sortedFiles = [];
+                     return;
+                 }
+
+                sortedFiles = files.sort((a, b) => a.name.localeCompare(b.name));
+
+                // 最初の画像から解像度を取得
+                const img = new Image();
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.onload = () => {
+                        imageDimensions = { width: img.width, height: img.height };
+
+                        // ★FINAL_CANVAS_WIDTHの計算ロジックを調整 (余白1-2割程度)
+                        // 元の画像の幅に対して、例えば1.8倍程度の比率で最終キャンバス幅を設定
+                        // これにより、左右に適切な余白が確保されるようになります。
+                        FINAL_CANVAS_WIDTH = Math.floor(imageDimensions.width * 1.8); // 1.6倍から1.8倍に増加
+
+                        // ただし、最低限の幅も確保
+                        if (FINAL_CANVAS_WIDTH < 700) FINAL_CANVAS_WIDTH = 700; // 最低幅も少し広げる
+
+                        // MATCH_NAME_WIDTH は FINAL_CANVAS_WIDTH に応じて調整
+                        // 例えば、FINAL_CANVAS_WIDTHの約20%を試合名に割り当てる
+                        MATCH_NAME_WIDTH = Math.floor(FINAL_CANVAS_WIDTH * 0.2);
+                        if (MATCH_NAME_WIDTH < 150) MATCH_NAME_WIDTH = 150; // 最低150px確保
+
+                        POINTS_AREA_WIDTH = Math.floor(FINAL_CANVAS_WIDTH * POINTS_AREA_WIDTH_RATIO);
+
+                        // DEST_ICON_STRIP_WIDTH も連動して調整
+                        DEST_ICON_STRIP_WIDTH = Math.floor((FINAL_CANVAS_WIDTH - (CANVAS_PADDING * 2) - MATCH_NAME_WIDTH - (SPACE_BETWEEN_ELEMENTS * 2) - POINTS_AREA_WIDTH) / 2);
+                        // ただし、小さくなりすぎる可能性があるので、最低値を設ける
+                        if (DEST_ICON_STRIP_WIDTH < 150) DEST_ICON_STRIP_WIDTH = 150;
+
+
+                        // フォントサイズも動的に調整（例として、幅に比例して調整）
+                        const widthRatio = FINAL_CANVAS_WIDTH / 750;
+                        POINTS_TEXT_SIZE = Math.max(20, Math.floor(28 * widthRatio));
+                        HEADER_TEXT_SIZE = Math.max(16, Math.floor(20 * widthRatio));
+                        COPYRIGHT_TEXT_SIZE = Math.max(11, Math.floor(14 * widthRatio));
+                        COMMENT_TEXT_SIZE = Math.max(16, Math.floor(20 * widthRatio)); // ひとことも動的に調整
+
+                        ROW_CONTENT_Y_START = HEADER_TEXT_Y_OFFSET + HEADER_TEXT_SIZE + 30;
+
+                        updateUIForSettings(sortedFiles.length);
+                        generateButton.disabled = false;
+                    };
+                    img.onerror = () => {
+                        alert('最初の画像の読み込みに失敗しました。');
+                        imageUpload.value = '';
+                        sortedFiles = [];
+                        generateButton.disabled = true;
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(sortedFiles[0]);
+            }
+
+            function getMatchName(index, totalImages) {
+                if (totalImages === 7) { // ギルド大会
+                    return (index < 4) ? `予選 第${index + 1}試合` : `本戦 第${index - 3}試合`;
+                } else if (totalImages === 6) { // 個人リーグ
+                    return (index < 3) ? `予選 第${index + 1}試合` : `本戦 第${index - 2}試合`;
+                }
+                return `試合 ${index + 1}`; // その他の枚数の場合
+            }
+
+
+            function updateUIForSettings(numImages) {
+                const p = document.createElement('p');
+                p.innerHTML = '<strong>選択されたファイル (処理順):</strong>';
+                fileListDiv.appendChild(p);
+
+                const ol = document.createElement('ol');
+                sortedFiles.forEach(file => {
+                    const li = document.createElement('li');
+                    li.textContent = file.name;
+                    ol.appendChild(li);
+                });
+                fileListDiv.appendChild(ol);
+
+                rowsContainer.innerHTML = '';
+                // rowsContainer.innerHTML = '<p class="info">画像をアップロードすると、ここに設定が表示されます。</p>';
+                // if (sortedFiles.length > 0) {
+                //     rowsContainer.innerHTML = '';
+                // }
+
+
+                sortedFiles.forEach((file, index) => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.classList.add('row-setting');
+
+                    // 試合名とファイル名をまとめるコンテナ
+                    const matchFileInfoDiv = document.createElement('div');
+                    matchFileInfoDiv.classList.add('match-file-info');
+
+                    const matchNameSpan = document.createElement('span');
+                    matchNameSpan.classList.add('match-name-display');
+                    matchNameSpan.textContent = getMatchName(index, numImages);
+                    matchFileInfoDiv.appendChild(matchNameSpan);
+
+                    const fileNameSpan = document.createElement('span');
+                    fileNameSpan.classList.add('file-name-display');
+                    fileNameSpan.textContent = `(${file.name})`;
+                    fileNameSpan.title = file.name;
+                    matchFileInfoDiv.appendChild(fileNameSpan);
+
+                    rowDiv.appendChild(matchFileInfoDiv);
+
+                    // ポイント設定部分をまとめるコンテナ
+                    const pointsSettingDiv = document.createElement('div');
+                    pointsSettingDiv.classList.add('points-setting');
+
+                    const label = document.createElement('label');
+                    label.setAttribute('for', `points-${index}`);
+                    label.textContent = 'ポイント:';
+
+                    const select = document.createElement('select');
+                    select.id = `points-${index}`;
+
+                    // 10Pを最初の選択肢として追加
+                    const option10 = document.createElement('option');
+                    option10.value = "10";
+                    option10.textContent = "10P";
+                    select.appendChild(option10);
+
+                    // 100Pから160Pまで5P刻みで選択肢を追加
+                    for (let pVal = 100; pVal <= 160; pVal += 5) {
+                        const option = document.createElement('option');
+                        option.value = pVal;
+                        option.textContent = `${pVal}P`;
+                        select.appendChild(option);
+                    }
+                    select.value = "160"; // デフォルトで160Pを選択
+
+                    pointsSettingDiv.appendChild(label);
+                    pointsSettingDiv.appendChild(select);
+                    rowDiv.appendChild(pointsSettingDiv);
+
+                    rowsContainer.appendChild(rowDiv);
+                });
+            }
+
+            async function generateImage() {
+                const numImages = sortedFiles.length;
+                const userComment = commentInput.value.trim(); // ひとこと欄のテキストを取得
+
+                if (numImages < 1 || numImages > 7 || imageDimensions.width === 0) {
+                    alert('画像が正しく選択されていないか、画像の解像度が取得できていません。');
+                    return;
+                }
+                generateButton.disabled = true;
+                generateButton.textContent = "生成中...";
+                downloadLink.style.display = 'none';
+
+                // %値から実際のピクセル値を計算
+                const cropSxPercent = parseFloat(cropSxInput.value) / 100;
+                const cropSOpponentYPercent = parseFloat(cropSOpponentYInput.value) / 100;
+                const cropSSelfYPercent = parseFloat(cropSSelfYInput.value) / 100;
+                const cropSHeightPercent = parseFloat(cropSHeightInput.value) / 100;
+
+                const sx = imageDimensions.width * cropSxPercent;
+                const sWidth = imageDimensions.width * (1 - 2 * cropSxPercent); // 両端の余白を引く
+                const sHeight = imageDimensions.height * cropSHeightPercent;
+
+                const syOpponent = imageDimensions.height * cropSOpponentYPercent;
+                const sySelf = imageDimensions.height * cropSSelfYPercent;
+
+                // 出力での相手・自分の画像高さも計算
+                const DEST_ICON_STRIP_HEIGHT = DEST_ICON_STRIP_WIDTH * (sHeight / sWidth);
+                const ROW_HEIGHT = DEST_ICON_STRIP_HEIGHT;
+
+                let commentAreaDrawingHeight = 0;
+                let commentLines = [];
+                if (userComment) {
+                    ctx.font = `bold ${COMMENT_TEXT_SIZE}px "Meiryo", "メイリオ", sans-serif`; // ★コメントのフォントをメイリオに
+                    // コメントの描画幅を調整: 左右のパディングを考慮した最大幅
+                    const maxWidth = FINAL_CANVAS_WIDTH - (CANVAS_PADDING * 2);
+
+                    const words = userComment.split(' ');
+                    let line = '';
+                    
+                    for (let n = 0; n < words.length; n++) {
+                        let testLine = line + words[n] + ' ';
+                        let metrics = ctx.measureText(testLine);
+                        let testWidth = metrics.width;
+                        if (testWidth > maxWidth && n > 0) {
+                            commentLines.push(line.trim()); // 各行の末尾の空白を削除
+                            line = words[n] + ' ';
+                        } else {
+                            line = testLine;
+                        }
+                    }
+                    commentLines.push(line.trim()); // 最後の行も追加し、末尾の空白を削除
+                    commentAreaDrawingHeight = commentLines.length * COMMENT_TEXT_SIZE * COMMENT_LINE_HEIGHT_FACTOR;
+                }
+
+                // 作成日の表示スペースとコメントスペースを確保するために、FINAL_CANVAS_HEIGHTを調整
+                // currentY は最後の行が描画された直後のY座標なので、そこからコメントの開始Y座標を計算
+                FINAL_CANVAS_HEIGHT = ROW_CONTENT_Y_START + (numImages * (ROW_HEIGHT + ROW_SPACING)) - ROW_SPACING; // 最後の行の下端まで
+                if (userComment) {
+                    FINAL_CANVAS_HEIGHT += COMMENT_AREA_MARGIN_AFTER_LAST_ROW; // 最後の画像行とコメントの間の余白
+                    FINAL_CANVAS_HEIGHT += commentAreaDrawingHeight; // コメントの実際の高さ
+                }
+                FINAL_CANVAS_HEIGHT += COMMENT_AREA_BOTTOM_MARGIN; // コメントエリアと著作権表示の間の余白
+                FINAL_CANVAS_HEIGHT += COPYRIGHT_TEXT_SIZE; // 著作権表示の高さ
+                FINAL_CANVAS_HEIGHT += CANVAS_PADDING; // 下部のパディング
+
+
+                resultCanvas.width = FINAL_CANVAS_WIDTH;
+                resultCanvas.height = FINAL_CANVAS_HEIGHT;
+
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, resultCanvas.width, resultCanvas.height);
+
+                ctx.fillStyle = '#333';
+                // フォントを明朝体またはRolaに近づける設定
+                ctx.font = `bold ${HEADER_TEXT_SIZE}px "Hiragino Mincho ProN", "MS Mincho", "Rola", serif`;
+                ctx.textBaseline = 'middle';
+
+                // 各ヘッダーの位置を調整
+                // 試合名カラムのX座標 (CANVAS_PADDING + MATCH_NAME_WIDTH / 2)
+                const matchNameColX = CANVAS_PADDING + MATCH_NAME_WIDTH / 2;
+
+                const opponentColX = CANVAS_PADDING + MATCH_NAME_WIDTH + SPACE_BETWEEN_ELEMENTS + DEST_ICON_STRIP_WIDTH / 2;
+
+                // 挑戦パーティの文字のX座標を調整 (相手パーティの画像の右端にスペースを空けて配置)
+                const selfColX = CANVAS_PADDING + MATCH_NAME_WIDTH + SPACE_BETWEEN_ELEMENTS + DEST_ICON_STRIP_WIDTH + SPACE_BETWEEN_ELEMENTS + DEST_ICON_STRIP_WIDTH / 2;
+
+                // 獲得戦績のX座標を調整（右寄せで、Pの位置が縦に揃うように）
+                // FINAL_CANVAS_WIDTHから右側のパディングを引いた位置にテキストの右端を合わせる
+                const pointsColX = FINAL_CANVAS_WIDTH - CANVAS_PADDING;
+
+                ctx.textAlign = 'center';
+                ctx.fillText('相手の防衛パーティ', opponentColX, HEADER_TEXT_Y_OFFSET);
+                ctx.fillText('挑戦パーティ', selfColX, HEADER_TEXT_Y_OFFSET);
+
+                ctx.textAlign = 'right';
+                ctx.fillText('獲得戦績', pointsColX, HEADER_TEXT_Y_OFFSET);
+
+
+                let currentY = ROW_CONTENT_Y_START;
+
+                for (let i = 0; i < numImages; i++) {
+                    const file = sortedFiles[i];
+                    const pointsInput = document.getElementById(`points-${i}`);
+                    if (!pointsInput) {
+                        console.error(`Points input for index ${i} not found`);
+                        currentY += ROW_HEIGHT + ROW_SPACING;
+                        continue;
+                    }
+                    const pointsValue = parseInt(pointsInput.value);
+                    const pointsText = `${pointsValue}P`;
+
+
+                    const cropOpponentDetails = { sx: sx, sy: syOpponent, sWidth: sWidth, sHeight: sHeight };
+                    const cropSelfDetails = { sx: sx, sy: sySelf, sWidth: sWidth, sHeight: sHeight };
+
+                    try {
+                        const opponentImg = await cropAndLoadImage(file, cropOpponentDetails);
+                        const selfImg = await cropAndLoadImage(file, cropSelfDetails);
+
+                        // 「予選 第X試合」「本戦 第X試合」の描画
+                        ctx.fillStyle = '#333';
+                        ctx.font = `bold ${HEADER_TEXT_SIZE * 0.9}px "Hiragino Mincho ProN", "MS Mincho", "Rola", serif`;
+                        ctx.textAlign = 'center';
+
+                        const matchName = getMatchName(i, numImages);
+                        // 試合名の描画位置を調整
+                        ctx.fillText(matchName, matchNameColX, currentY + ROW_HEIGHT / 2);
+
+
+                        // 画像の描画位置を調整
+                        const opponentDrawX = CANVAS_PADDING + MATCH_NAME_WIDTH + SPACE_BETWEEN_ELEMENTS;
+                        ctx.drawImage(opponentImg, opponentDrawX, currentY, DEST_ICON_STRIP_WIDTH, DEST_ICON_STRIP_HEIGHT);
+
+                        // 挑戦パーティの描画位置を調整
+                        const selfDrawX = opponentDrawX + DEST_ICON_STRIP_WIDTH + SPACE_BETWEEN_ELEMENTS;
+                        ctx.drawImage(selfImg, selfDrawX, currentY, DEST_ICON_STRIP_WIDTH, DEST_ICON_STRIP_HEIGHT);
+
+                        ctx.textAlign = 'right';
+                        ctx.textBaseline = 'middle';
+                        ctx.font = `bold ${POINTS_TEXT_SIZE}px "Hiragino Mincho ProN", "MS Mincho", "Rola", serif`;
+                        ctx.fillStyle = getPointColor(pointsValue);
+                        // 獲得戦績の描画位置を調整
+                        ctx.fillText(pointsText, pointsColX, currentY + ROW_HEIGHT / 2);
+
+
+                    } catch (error) {
+                        console.error(`Error processing file ${file.name}:`, error);
+                        ctx.fillStyle = 'red';
+                        ctx.font = '10px Arial';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(`エラー: ${file.name.substring(0,15)}...`, CANVAS_PADDING, currentY + ROW_HEIGHT / 2);
+                    }
+                    currentY += ROW_HEIGHT + ROW_SPACING;
+                }
+                // 最後の描画後の currentY は、最後の画像のY座標+高さ+行間になっているので、
+                // 最後の画像の底辺は currentY - ROW_SPACING です。
+
+                // ひとことコメントの描画
+                if (userComment && commentLines.length > 0) {
+                    ctx.fillStyle = '#333';
+                    ctx.font = `bold ${COMMENT_TEXT_SIZE}px "Meiryo", "メイリオ", sans-serif`; // ★コメントのフォントをメイリオに
+                    ctx.textAlign = 'left';
+                    // 修正点: コメントのX座標を「相手の防衛パーティ」の画像開始位置に合わせる
+                    let commentX = CANVAS_PADDING + MATCH_NAME_WIDTH + SPACE_BETWEEN_ELEMENTS;
+                    
+                    // コメントの描画開始Y座標を、最後の画像の表示終了位置 (currentY - ROW_SPACING) から
+                    // 指定されたマージン COMMENT_AREA_MARGIN_AFTER_LAST_ROW を加えた位置に設定
+                    // さらに、コメント行のテキストの開始位置を考慮してCOMMENT_TEXT_SIZE * COMMENT_LINE_HEIGHT_FACTOR / 2 を加える
+                    let commentY = (currentY - ROW_SPACING) + COMMENT_AREA_MARGIN_AFTER_LAST_ROW + (COMMENT_TEXT_SIZE * COMMENT_LINE_HEIGHT_FACTOR / 2);
+                    
+                    for (let j = 0; j < commentLines.length; j++) {
+                        ctx.fillText(commentLines[j], commentX, commentY + (j * COMMENT_TEXT_SIZE * COMMENT_LINE_HEIGHT_FACTOR));
+                    }
+                    // コメント描画後、currentYを更新して、著作権表示の位置を正しく計算できるようにする
+                    currentY = commentY + (commentLines.length * COMMENT_TEXT_SIZE * COMMENT_LINE_HEIGHT_FACTOR);
+                }
+
+
+                // 右下に作成日を表示 (Created onYYYY/MM/DD 形式に戻す)
+                ctx.fillStyle = '#777';
+                ctx.font = `normal ${COPYRIGHT_TEXT_SIZE}px "Hiragino Mincho ProN", "MS Mincho", "Rola", serif`;
+                ctx.textAlign = 'right';
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                const day = today.getDate().toString().padStart(2, '0');
+
+                // 「Created onYYYY/MM/DD」形式
+                const createdDateString = `Created on ${year}/${month}/${day}`;
+                ctx.fillText(createdDateString, FINAL_CANVAS_WIDTH - CANVAS_PADDING, FINAL_CANVAS_HEIGHT - CANVAS_PADDING);
+
+                // ファイル名に日時を追加
+                const hours = today.getHours().toString().padStart(2, '0');
+                const minutes = today.getMinutes().toString().padStart(2, '0');
+                const dateStringForFilename = `${year}${month}${day}${hours}${minutes}`;
+                downloadLink.href = resultCanvas.toDataURL('image/png', 1.0);
+                downloadLink.download = `DQTACT_BattleLogSummary_${dateStringForFilename}.png`;
+                downloadLink.style.display = 'block';
+                generateButton.disabled = false;
+                generateButton.textContent = "画像を生成 ✨";
+            }
+
+            function cropAndLoadImage(imageFile, cropDetails) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const tempCanvas = document.createElement('canvas');
+                            const tempCtx = tempCanvas.getContext('2d');
+                            if (cropDetails.sWidth <= 0 || cropDetails.sHeight <= 0) {
+                                return reject(new Error("切り出し範囲の幅または高さが無効です。"));
+                            }
+                            tempCanvas.width = cropDetails.sWidth;
+                            tempCanvas.height = cropDetails.sHeight;
+                            try {
+                                tempCtx.drawImage(img,
+                                    cropDetails.sx, cropDetails.sy,
+                                    cropDetails.sWidth, cropDetails.sHeight,
+                                    0, 0,
+                                    cropDetails.sWidth, cropDetails.sHeight
+                                );
+                                const croppedImage = new Image();
+                                croppedImage.onload = () => resolve(croppedImage);
+                                croppedImage.onerror = (err) => reject(new Error("切り出し画像の読み込みに失敗:" + err));
+                                croppedImage.src = tempCanvas.toDataURL();
+                            } catch (drawError) {
+                                reject(new Error(`元画像の描画エラー: ${drawError.message}`));
+                            }
+                        };
+                        img.onerror = () => reject(new Error("元画像の読み込みに失敗。ファイルが破損しているか、サポート外の形式かもしれません。"));
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = () => reject(new Error("ファイル読み取りエラー。"));
+                    reader.readAsDataURL(imageFile);
+                });
+            }
+
+            function getPointColor(pointsValue) {
+                // 現状のカラーロジックを維持
+                if (pointsValue === 10) return 'red';
+
+                const orange = { r: 255, g: 165, b: 0 };
+                const blue = { r: 0, g: 0, b: 255 };
+                const purpleish = { r: 160, g: 0, b: 200 };
+
+                const minPoints = 100;
+                const maxPoints = 160;
+
+                const clampedPoints = Math.max(minPoints, Math.min(maxPoints, pointsValue));
+
+                let r, g, b;
+
+                if (clampedPoints <= 155) {
+                    const ratio = (clampedPoints - minPoints) / (155 - minPoints);
+                    r = Math.round(orange.r * (1 - ratio) + purpleish.r * ratio);
+                    g = Math.round(orange.g * (1 - ratio) + purpleish.g * ratio);
+                    b = Math.round(orange.b * (1 - ratio) + purpleish.b * ratio);
+                } else {
+                    const ratio = (clampedPoints - 155) / (maxPoints - 155);
+                    r = Math.round(purpleish.r * (1 - ratio) + blue.r * ratio);
+                    g = Math.round(purpleish.g * (1 - ratio) + blue.g * ratio);
+                    b = Math.round(purpleish.b * (1 - ratio) + blue.b * ratio);
+                }
+
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+        });
+    </script>
+</body>
+</html>
