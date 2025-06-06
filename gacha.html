@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DQTガチャ画像連結</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Changed font-family */
+            margin: 0;
+            padding-top: 1rem; /* Changed to rem */
+            padding-bottom: 3rem; /* Changed to rem */
+            padding-left: 0.5rem; /* Adjusted padding */
+            padding-right: 0.5rem; /* Adjusted padding */
+            background-color: #f0f2f5; /* Changed background color */
+            color: #333; /* Changed text color */
+            line-height: 1.6;
+            font-size: 16px; /* Base font size for rem calculation */
+        }
+        .container {
+            max-width: 900px; /* Adjusted for wider content on mobile */
+            margin: auto;
+            padding: 1rem; /* Adjusted padding for better mobile fit */
+            background-color: #ffffff; /* White background for the content area */
+            border-radius: 12px; /* Rounded corners */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+        }
+        .file-input-label {
+            cursor: pointer;
+            background-color: #4f46e5; /* Indigo */
+            color: white;
+            padding: 0.65rem 1.25rem; /* Adjusted padding */
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-size: 0.9rem; /* Slightly smaller font for mobile */
+        }
+        .file-input-label:hover {
+            background-color: #4338ca; /* Darker indigo on hover */
+        }
+        .button-primary {
+            background-color: #22c55e; /* Green */
+            color: white;
+            padding: 0.65rem 1.25rem; /* Adjusted padding */
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-size: 0.9rem; /* Slightly smaller font for mobile */
+        }
+        .button-primary:hover {
+            background-color: #16a34a; /* Darker green on hover */
+        }
+        canvas {
+            border: 2px solid #e2e8f0; /* Light border for canvas */
+            background-color: #f8fafc; /* Lighter background for canvas */
+            border-radius: 8px;
+            display: block; /* Ensures no extra space below canvas */
+            max-width: 100%; /* Make canvas responsive */
+            height: auto; /* Maintain aspect ratio */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .image-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem; /* Slightly smaller gap for mobile */
+            margin-top: 1rem;
+            justify-content: center; /* Center the image previews */
+        }
+        .image-preview {
+            width: 80px; /* Smaller preview images */
+            height: 80px; /* Smaller preview images */
+            border-radius: 8px;
+            border: 1px solid #cbd5e0;
+            object-fit: cover; /* Fill the 100x100px area, potentially cropping */
+            background-color: #ffffff; /* White background for preview area */
+        }
+        .number-input-group {
+            display: flex;
+            align-items: center;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            overflow: hidden; /* Ensures child elements don't break rounded corners */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+        }
+        .number-input-group input {
+            flex-grow: 1;
+            text-align: center;
+            padding: 0.5rem 0.75rem; /* p-2 */
+            border: none; /* Remove individual input border */
+            outline: none; /* Remove focus outline */
+            font-size: 1rem; /* text-base */
+        }
+        .number-input-group button {
+            background-color: #e2e8f0; /* gray-200 */
+            color: #4a5568; /* gray-700 */
+            padding: 0.5rem 0.75rem;
+            font-weight: bold;
+            font-size: 1.25rem;
+            transition: background-color 0.2s ease;
+            border: none;
+            cursor: pointer;
+            width: 2.5rem; /* Fixed width for buttons */
+            height: 2.5rem; /* Fixed height for buttons */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .number-input-group button:hover {
+            background-color: #cbd5e0; /* gray-300 */
+        }
+        .number-input-group button:first-child {
+            border-top-left-radius: 0.4rem; /* Match parent border-radius */
+            border-bottom-left-radius: 0.4rem;
+        }
+        .number-input-group button:last-child {
+            border-top-right-radius: 0.4rem; /* Match parent border-radius */
+            border-bottom-right-radius: 0.4rem;
+        }
+        .author-info {
+            margin-top: 3rem; /* remに変更 */
+            padding-top: 1.25rem; /* remに変更 */
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.85rem; /* remに変更 */
+            color: #666;
+            text-align: left; /* 左揃え */
+            padding-left: 5%; /* 左に5%の余白 */
+            padding-right: 5%; /* 右に5%の余白 */
+            max-width: 90%; /* コンテンツの最大幅を90%に制限 */
+            margin-left: auto; /* 中央寄せ */
+            margin-right: auto; /* 中央寄せ */
+            box-sizing: border-box; /* パディングを含めて幅を計算 */
+        }
+        .author-info h3 {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: bold;
+            margin-bottom: 0.75rem;
+        }
+        .author-info p {
+            font-size: 0.95rem;
+            line-height: 1.6; /* Adjusted line-height */
+            margin-bottom: 0.8rem; /* remに変更 (行間のスペースを広げる) */
+        }
+        .author-info a {
+            color: #4f46e5; /* Indigo */
+            text-decoration: none;
+        }
+        .author-info a:hover {
+            text-decoration: underline;
+        }
+        .version-info {
+            display: flex;
+            justify-content: center; /* 中央揃えを維持 */
+            gap: 0.5rem; /* 要素間のスペース */
+            flex-wrap: wrap; /* 小さい画面で折り返す */
+            margin-top: 1.5rem; /* バージョン情報の上部にスペースを追加 */
+            font-size: 0.875rem; /* text-sm */
+            color: #64748b; /* slate-500 */
+            text-align: center; /* Centered */
+            border-top: none; /* Remove border from previous footer */
+            padding-top: 0; /* Remove padding from previous footer */
+        }
+        .version-info p {
+            margin: 0; /* Reset margin for paragraphs within version-info */
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container flex flex-col items-center space-y-6">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-4 text-center">
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600">
+                DQTガチャ画像連結
+            </span>
+        </h1>
+
+        <div class="w-full flex flex-col items-center justify-center space-y-3 md:space-y-0 md:space-x-4">
+            <label for="imageUpload" class="file-input-label inline-flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-4 4 4 4-4v2z" clip-rule="evenodd" />
+                </svg>
+                画像をアップロード (5-15枚)
+                <input type="file" id="imageUpload" multiple accept="image/*" class="hidden">
+            </label>
+        </div>
+
+        <div id="imagePreviewContainer" class="image-preview-container w-full"></div>
+
+        <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+                <label for="cropYStart" class="block text-base font-semibold text-gray-700 mb-1">切り出し開始Y座標 (%):</label>
+                <div class="number-input-group">
+                    <button type="button" id="cropYStartMinus">-</button>
+                    <input type="number" id="cropYStart" value="30" min="0" max="100">
+                    <button type="button" id="cropYStartPlus">+</button>
+                </div>
+            </div>
+            <div>
+                <label for="cropHeightPercent" class="block text-base font-semibold text-gray-700 mb-1">切り出し高さの割合 (%):</label>
+                <div class="number-input-group">
+                    <button type="button" id="cropHeightPercentMinus">-</button>
+                    <input type="number" id="cropHeightPercent" value="31" min="1" max="100">
+                    <button type="button" id="cropHeightPercentPlus">+</button>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">※iphone13の場合、23(%) でピックアップ保証のバーが消せます</p>
+            </div>
+        </div>
+
+        <div class="w-full">
+            <label for="commentInput" class="block text-base font-semibold text-gray-700 mb-1">ひとこと:</label>
+            <input type="text" id="commentInput" placeholder="oooo ガチャ 100-150連　など、ひとことあれば"
+                   class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-base">
+        </div>
+
+        <div class="w-full flex justify-center mt-6"> <!-- Moved generate button here -->
+            <button id="generateButton" class="button-primary inline-flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l.608-.245a1 1 0 00.524-.959V7.5a1 1 0 011-1h6.5a1 1 0 011 1v7.909a1 1 0 00.524.959l.608.245a1 1 0 001.169-1.409l-7-14z" />
+                </svg>
+                画像を生成
+            </button>
+        </div>
+
+        <canvas id="outputCanvas" class="w-full h-auto"></canvas>
+
+        <button id="downloadButton" class="button-primary inline-flex items-center justify-center mt-6" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            画像をダウンロード
+        </button>
+
+        <div class="author-info">
+            <h3>作者 ( <a href="https://x.com/jmazeppa" target="_blank" rel="noopener noreferrer">@jmazeppa</a> ) より</h3>
+            <p>xでガチャ画像を4枚までしかあげれないので、全部入りをあげれるように作ってみました。</p>
+            <p>なおこのツールは、アップロードされた画像をサーバーに送信したり、収集したりすることはありません。すべての画像処理は、お使いのブラウザ内（JavaScript）で完結していますので、ご安心ください。また、このHTMLコードはGoogleのGeminiによって生成されました。</p>
+            <div class="version-info">
+                <p>最終更新日: 2025/06/07 バージョン: 1.0.0</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Removed the old footer as its content is now part of author-info -->
+
+    <script>
+        // Get DOM elements
+        const imageUpload = document.getElementById('imageUpload');
+        const generateButton = document.getElementById('generateButton');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const commentInput = document.getElementById('commentInput');
+        const downloadButton = document.getElementById('downloadButton');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const cropYStartInput = document.getElementById('cropYStart');
+        const cropHeightPercentInput = document.getElementById('cropHeightPercent');
+        const ctx = outputCanvas.getContext('2d');
+
+        // Buttons for cropYStart
+        const cropYStartMinus = document.getElementById('cropYStartMinus');
+        const cropYStartPlus = document.getElementById('cropYStartPlus');
+
+        // Buttons for cropHeightPercent
+        const cropHeightPercentMinus = document.getElementById('cropHeightPercentMinus');
+        const cropHeightPercentPlus = document.getElementById('cropHeightPercentPlus');
+
+        let uploadedImages = []; // Array to hold uploaded images
+        let imageFiles = []; // Array to hold uploaded file objects
+
+        // Helper function to adjust number input value
+        function adjustNumberInput(inputElement, delta) {
+            let currentValue = parseFloat(inputElement.value);
+            if (isNaN(currentValue)) {
+                currentValue = parseFloat(inputElement.min || 0); // Default to min or 0 if not a number
+            }
+            const newValue = currentValue + delta;
+            const min = parseFloat(inputElement.min);
+            const max = parseFloat(inputElement.max);
+
+            if (newValue >= min && newValue <= max) {
+                inputElement.value = newValue;
+            } else if (newValue < min) {
+                inputElement.value = min;
+            } else if (newValue > max) {
+                inputElement.value = max;
+            }
+        }
+
+        // Event listeners for cropYStart buttons
+        cropYStartMinus.addEventListener('click', () => adjustNumberInput(cropYStartInput, -1));
+        cropYStartPlus.addEventListener('click', () => adjustNumberInput(cropYStartInput, 1));
+
+        // Event listeners for cropHeightPercent buttons
+        cropHeightPercentMinus.addEventListener('click', () => adjustNumberInput(cropHeightPercentInput, -1));
+        cropHeightPercentPlus.addEventListener('click', () => adjustNumberInput(cropHeightPercentInput, 1));
+
+
+        // Image upload handling
+        imageUpload.addEventListener('change', (event) => {
+            uploadedImages = []; // Clear array
+            imageFiles = Array.from(event.target.files); // Convert FileList to array
+
+            // Sort by file name (ascending order)
+            imageFiles.sort((a, b) => {
+                const nameA = a.name.match(/\d+/);
+                const nameB = b.name.match(/\d+/);
+                return nameA && nameB ? parseInt(nameA[0]) - parseInt(nameB[0]) : a.name.localeCompare(b.name);
+            });
+
+            imagePreviewContainer.innerHTML = ''; // Clear preview
+
+            if (imageFiles.length < 5 || imageFiles.length > 15) {
+                // Use a custom message box instead of alert()
+                showMessageBox('画像を5枚から15枚アップロードしてください。');
+                imageUpload.value = ''; // Reset file input
+                return;
+            }
+
+            let loadedCount = 0;
+            imageFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        uploadedImages.push({ img: img, name: file.name });
+                        // Display preview
+                        const previewImg = document.createElement('img');
+                        previewImg.src = e.target.result;
+                        previewImg.classList.add('image-preview');
+                        imagePreviewContainer.appendChild(previewImg);
+
+                        loadedCount++;
+                        if (loadedCount === imageFiles.length) {
+                            // Sort again by filename after all images are loaded
+                            uploadedImages.sort((a, b) => {
+                                const nameA = a.name.match(/\d+/);
+                                const nameB = b.name.match(/\d+/);
+                                return nameA && nameB ? parseInt(nameA[0]) - parseInt(nameB[0]) : a.name.localeCompare(b.name);
+                            });
+                            console.log('All images loaded.');
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        // Image generation processing
+        generateButton.addEventListener('click', () => {
+            if (uploadedImages.length === 0) {
+                // Use a custom message box instead of alert()
+                showMessageBox('画像をアップロードしてください。');
+                return;
+            }
+
+            // Get crop parameters from input fields
+            const cropYStartPercent = parseFloat(cropYStartInput.value);
+            const cropHeightPercent = parseFloat(cropHeightPercentInput.value);
+
+            if (isNaN(cropYStartPercent) || isNaN(cropHeightPercent) ||
+                cropYStartPercent < 0 || cropYStartPercent > 100 ||
+                cropHeightPercent < 1 || cropHeightPercent > 100 ||
+                (cropYStartPercent + cropHeightPercent) > 100) {
+                showMessageBox('切り出しY座標と高さの割合は0-100%の範囲で入力し、合計が100%を超えないようにしてください。');
+                return;
+            }
+
+
+            // Set max width for the output image
+            const MAX_WIDTH = 1000;
+
+            // Image layout settings
+            let imagesPerRow = 2;
+            if (uploadedImages.length === 15) {
+                imagesPerRow = 3;
+            }
+
+            // Calculate cropped image size (based on the first image)
+            const firstImage = uploadedImages[0].img;
+            const cropY = firstImage.height * (cropYStartPercent / 100);
+            const cropHeight = firstImage.height * (cropHeightPercent / 100);
+
+            const croppedWidth = firstImage.width;
+            const calculatedCroppedHeight = cropHeight;
+
+            // Calculate combined image width for the canvas
+            const combinedImageWidth = croppedWidth * imagesPerRow;
+
+            // Final canvas width, considering max width
+            const canvasWidth = Math.min(combinedImageWidth, MAX_WIDTH);
+
+            // Drawing width for each image (adjusted to canvas width)
+            const drawWidth = canvasWidth / imagesPerRow;
+            // Drawing height for each image (maintain aspect ratio)
+            const drawHeight = drawWidth * (calculatedCroppedHeight / croppedWidth);
+
+            // Determine actual height needed for comment
+            const comment = commentInput.value;
+            let actualTextHeight = 0; // Initialize actual text height
+            const COMMENT_AREA_HEIGHT = 60; // Height for the comment area when present
+
+            if (comment) {
+                actualTextHeight = COMMENT_AREA_HEIGHT;
+            }
+
+            // Number of rows
+            const numRows = Math.ceil(uploadedImages.length / imagesPerRow);
+            const canvasHeight = drawHeight * numRows + actualTextHeight;
+
+            // Set canvas size (internal drawing buffer)
+            outputCanvas.width = canvasWidth;
+            outputCanvas.height = canvasHeight;
+
+            // Apply CSS styles for display (explicitly set height based on aspect ratio)
+            outputCanvas.style.width = '100%';
+            // Calculate and set the display height based on the new intrinsic aspect ratio and the current actual rendered width
+            // This ensures the visual display matches the content's aspect ratio.
+            // Using a short setTimeout to allow for reflow after setting width to '100%'
+            setTimeout(() => {
+                outputCanvas.style.height = `${outputCanvas.clientWidth * (canvasHeight / canvasWidth)}px`;
+            }, 0);
+
+
+            // Fill background with white
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+            // Draw images
+            uploadedImages.forEach((imageObj, index) => {
+                const img = imageObj.img;
+                const col = index % imagesPerRow;
+                const row = Math.floor(index / imagesPerRow);
+
+                const x = col * drawWidth;
+                const y = row * drawHeight;
+
+                // Crop and draw the image
+                ctx.drawImage(img,
+                              0, cropY, // Source image X, Y start
+                              croppedWidth, calculatedCroppedHeight, // Source image width, height
+                              x, y, // Destination canvas X, Y start
+                              drawWidth, drawHeight); // Destination canvas width, height
+            });
+
+            // Draw comment only if it exists
+            if (comment) {
+                ctx.fillStyle = '#333333'; // Text color
+                ctx.font = 'bold 30px Inter, sans-serif'; // Font and size
+                ctx.textAlign = 'center'; // Center align
+                ctx.textBaseline = 'middle'; // Middle align
+
+                // Position text at the bottom center of the canvas
+                ctx.fillText(comment, outputCanvas.width / 2, canvasHeight - (COMMENT_AREA_HEIGHT / 2));
+            }
+
+            downloadButton.style.display = 'block'; // Show download button
+        });
+
+        // Download handling
+        downloadButton.addEventListener('click', () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const filename = `gacha_results_${year}${month}${day}.png`;
+
+            const dataURL = outputCanvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = dataURL;
+            a.download = filename; // Use the dynamically generated filename
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        // Custom message box function instead of alert()
+        function showMessageBox(message) {
+            const messageBox = document.createElement('div');
+            messageBox.classList.add('fixed', 'inset-0', 'flex', 'items-center', 'justify-center', 'z-50', 'bg-gray-800', 'bg-opacity-75');
+            messageBox.innerHTML = `
+                <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm mx-auto">
+                    <p class="text-gray-800 text-lg mb-4">${message}</p>
+                    <button class="button-primary px-6 py-2" onclick="this.parentElement.parentElement.remove()">OK</button>
+                </div>
+            `;
+            document.body.appendChild(messageBox);
+        }
+
+        // Canvas resize handling
+        const resizeCanvas = () => {
+            // No direct resizing of canvas drawing buffer here.
+            // The canvas drawing buffer (outputCanvas.width/height) is set on generateButton click.
+            // The CSS width:100% and height:auto should handle responsiveness based on that.
+        };
+
+        window.addEventListener('resize', resizeCanvas);
+        // Initial resize handled by CSS
+    </script>
+</body>
+</html>
