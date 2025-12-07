@@ -81,12 +81,12 @@
     "base_status_at_max_level": [1080, 351, 455, 283, 444, 162],
     "panel_status_at_max_level": [0, 0, 0, 0, 0, 0],
     "awakening_table": [
-        { "level": 0, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
-        { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
-        { "level": 2, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
-        { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
-        { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
-        { "level": 5, "additives": [30, 0, 15, 0, 40, 0], "magnifiers": [25, 25, 25, 25, 25, 25] }
+      { "level": 0, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
+      { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
+      { "level": 2, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
+      { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
+      { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
+      { "level": 5, "additives": [30, 0, 15, 0, 40, 0], "magnifiers": [25, 25, 25, 25, 25, 25] }
     ]
   },
   {
@@ -96,12 +96,12 @@
     "base_status_at_max_level": [938, 338, 460, 394, 406, 101],
     "panel_status_at_max_level": [150, 30, 15, 25, 15, 15],
     "awakening_table": [
-        { "level": 0, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
-        { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
-        { "level": 2, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
-        { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
-        { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
-        { "level": 5, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [25, 25, 25, 25, 25, 25] }
+      { "level": 0, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
+      { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
+      { "level": 2, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
+      { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
+      { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
+      { "level": 5, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [25, 25, 25, 25, 25, 25] }
     ]
   },
   {
@@ -117,6 +117,36 @@
       { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
       { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
       { "level": 5, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [25, 25, 25, 25, 25, 25] }
+    ]
+  },
+  {
+    "id": 802,
+    "name_jp": "大勇者アバン",
+    "family_jp": "英雄",
+    "base_status_at_max_level": [1553, 562, 615, 564, 496, 308],
+    "panel_status_at_max_level": [0, 0, 0, 0, 0, 0],
+    "awakening_table": [
+      { "level": 0, "additives": [0, 0, 15, 0, 20, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
+      { "level": 1, "additives": [0, 0, 15, 0, 20, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
+      { "level": 2, "additives": [0, 0, 15, 0, 20, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
+      { "level": 3, "additives": [0, 0, 15, 0, 20, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
+      { "level": 4, "additives": [0, 0, 15, 0, 20, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
+      { "level": 5, "additives": [0, 0, 15, 0, 20, 0], "magnifiers": [25, 25, 25, 25, 25, 25] }
+    ]
+  },
+  {
+    "id": 804,
+    "name_jp": "真・大魔王バーン",
+    "family_jp": "？？？",
+    "base_status_at_max_level": [1512, 651, 622, 536, 527, 506],
+    "panel_status_at_max_level": [0, 0, 0, 0, 0, 0],
+    "awakening_table": [
+      { "level": 0, "additives": [30, 15, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
+      { "level": 1, "additives": [30, 15, 0, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
+      { "level": 2, "additives": [30, 15, 0, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
+      { "level": 3, "additives": [30, 15, 0, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
+      { "level": 4, "additives": [30, 15, 0, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
+      { "level": 5, "additives": [30, 15, 0, 0, 0, 0], "magnifiers": [25, 25, 25, 25, 25, 25] }
     ]
   }
 ]
