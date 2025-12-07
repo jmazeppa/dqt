@@ -159,10 +159,19 @@
         </div>
 
         <div class="input-group bg-indigo-50 text-center">
-            <button onclick="shareUrl()" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 shadow-lg text-lg">
+            <button onclick="displayAndCopyUrl()" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 shadow-lg text-lg">
                 🔗 現在の設定URLを共有
             </button>
-            <p id="shareMessage" class="mt-2 text-sm text-green-700 hidden">URLをクリップボードにコピーしました！</p>
+            
+            <div id="urlShareArea" class="mt-4 hidden p-3 bg-indigo-100 border border-indigo-300 rounded-lg">
+                <p class="text-sm font-semibold text-gray-700 mb-2">共有用URL (手動でコピーしてください):</p>
+                <div class="flex">
+                    <input type="text" id="shareUrlInput" class="flex-grow p-2 border border-gray-400 rounded-l-lg text-sm" readonly>
+                    <button onclick="copyToClipboard('shareUrlInput')" class="px-3 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-r-lg text-sm transition duration-150">コピー</button>
+                </div>
+                <p id="shareCopyMessage" class="mt-2 text-xs text-green-700 hidden">クリップボードにコピーしました！</p>
+                <p class="mt-2 text-xs text-gray-600">※ Google Site埋め込みの制限により、自動コピーが失敗する場合があるため、上のテキストボックスから直接コピーしてください。</p>
+            </div>
         </div>
         
     </div>
@@ -418,6 +427,7 @@
                 }
             });
 
+            // iFrame内部のURLを更新
             const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
             history.replaceState(null, '', newUrl);
         }
@@ -526,26 +536,57 @@
             document.getElementById('mrRateSummary').innerHTML = mrSummaryHtml.slice(0, -3); 
             document.getElementById('statusResultTableBody').innerHTML = resultHtml;
             
+            // iFrameのURLを更新（iFrame外のアドレスバーは更新されないが、内部のURLを正確に保つ）
             updateUrlParameters(selectedCharId, awakeningLevel, mrLevel, fixedValues);
         }
         
         /**
-         * 現在のURLをクリップボードにコピーする
+         * 共有ボタンが押されたとき、URLを表示してコピーを試みる
          */
-        function shareUrl() {
-            const shareMessage = document.getElementById('shareMessage');
+        function displayAndCopyUrl() {
+            const shareArea = document.getElementById('urlShareArea');
+            const shareInput = document.getElementById('shareUrlInput');
             
+            // iFrame内部のURL (パラメータ付き) を取得
             const urlToCopy = window.location.href;
+            shareInput.value = urlToCopy;
             
-            navigator.clipboard.writeText(urlToCopy).then(() => {
-                shareMessage.textContent = 'URLをクリップボードにコピーしました！';
-                shareMessage.classList.remove('hidden');
+            // 共有エリアを表示
+            shareArea.classList.remove('hidden');
+
+            // 自動コピーを試みる（失敗しても手動コピーが残る）
+            copyToClipboard('shareUrlInput');
+        }
+
+        /**
+         * 指定されたIDの要素のテキストをクリップボードにコピーする
+         */
+        function copyToClipboard(elementId) {
+            const inputElement = document.getElementById(elementId);
+            const copyMessage = document.getElementById('shareCopyMessage');
+            
+            if (!inputElement) return;
+
+            // 選択してコピーを試みる
+            inputElement.select();
+            inputElement.setSelectionRange(0, 99999); // モバイル対応
+            
+            // Clipboard APIを試みる
+            navigator.clipboard.writeText(inputElement.value).then(() => {
+                copyMessage.textContent = 'クリップボードにコピーしました！';
+                copyMessage.classList.remove('hidden');
                 setTimeout(() => {
-                    shareMessage.classList.add('hidden');
+                    copyMessage.classList.add('hidden');
                 }, 3000);
-            }, () => {
-                shareMessage.textContent = 'コピーに失敗しました。ブラウザのアドレスバーから直接コピーしてください。';
-                shareMessage.classList.remove('hidden');
+            }).catch(err => {
+                // 自動コピー失敗時 (Google SiteのIframeで発生しやすい)
+                console.error('自動コピー失敗', err);
+                // メッセージを更新して手動コピーを促す
+                copyMessage.textContent = '自動コピーに失敗しました。URLを選択して手動でコピーしてください。';
+                copyMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    copyMessage.classList.add('hidden');
+                }, 5000);
             });
         }
 
