@@ -64,7 +64,7 @@
     "name_jp": "スーパーキラーマシン",
     "family_jp": "物質",
     "base_status_at_max_level": [1072, 346, 468, 348, 372, 113],
-    "panel_status_at_max_level": [120, 30, 0, 25, 15, 15],
+    "panel_status_at_max_level": [150, 30, 15, 25, 15, 15],
     "awakening_table": [
       { "level": 0, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
       { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
@@ -94,7 +94,7 @@
     "name_jp": "キラーマシン3",
     "family_jp": "物質",
     "base_status_at_max_level": [938, 338, 460, 394, 406, 101],
-    "panel_status_at_max_level": [120, 30, 0, 25, 15, 15],
+    "panel_status_at_max_level": [150, 30, 15, 25, 15, 15],
     "awakening_table": [
         { "level": 0, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
         { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
@@ -109,7 +109,7 @@
     "name_jp": "魔剣士ピサロ",
     "family_jp": "？？？",
     "base_status_at_max_level": [1105, 476, 490, 265, 470, 176],
-    "panel_status_at_max_level": [120, 30, 0, 75, 15, 15],
+    "panel_status_at_max_level": [150, 30, 15, 75, 15, 15],
     "awakening_table": [
       { "level": 0, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
       { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
