@@ -38,10 +38,11 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
         .result-cell {
-            font-size: 1rem;
+            font-size: 0.9rem; /* スマホ向けに少し小さく */
             font-weight: 700;
-            padding: 0.5rem;
+            padding: 0.5rem 0.25rem;
             text-align: center;
+            white-space: nowrap; /* 結果の改行を防ぐ */
         }
         .input-group {
             background-color: #fff;
@@ -49,37 +50,12 @@
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
-        /* ラジオボタンのカスタムスタイル */
-        .radio-button-label {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #ccc;
-            border-radius: 9999px;
-            cursor: pointer;
-            transition: all 0.15s;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        .radio-button-label input:checked + span {
-            background-color: #4f46e5;
-            color: white;
-            border-color: #4f46e5;
-            box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
-        }
-        .radio-button-label input {
-            display: none;
-        }
-        .radio-button-label span {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-        }
     </style>
 </head>
 <body onload="loadMasterData()">
     <div class="main-title">
         <h1 class="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600">
-            DQTact 全ステータス計算ツール
+            DQTact ステータス計算ツール
         </h1>
         <h2 id="charNameDisplay" class="text-xl font-bold text-gray-700 mt-1">データを読み込み中...</h2>
     </div>
@@ -105,49 +81,51 @@
                         class="w-full p-3 border border-indigo-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg" disabled>
                     </select>
             </div>
+        </div>
 
-            <div class="md:col-span-3 text-sm text-gray-600 space-y-1 p-2 bg-blue-100 rounded-md">
-                <p>系統: <span id="familyDisplay" class="font-bold text-indigo-600">--</span></p>
-                <p>MR補正率: <span id="mrRateDisplay" class="font-bold">--</span></p>
+        <div class="input-group bg-yellow-50">
+            <label for="mrLevel" class="block text-base font-semibold text-gray-700 mb-2">
+                マスターランク (MR) レベル: <span id="mrLevelDisplay" class="font-extrabold text-red-600">0</span>
+            </label>
+            <input type="range" id="mrLevel" oninput="updateAllCalculations()" min="0" max="100" value="0"
+                   class="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer range-lg">
+            
+            <div class="mt-3 text-sm text-gray-600 space-y-1 p-2 bg-yellow-100 rounded-md">
+                <p>現在MRレベルによる補正率:</p>
+                <p id="mrRateSummary" class="font-bold text-gray-800">--</p>
             </div>
         </div>
 
+
         <div class="input-group bg-green-50">
             <h3 class="text-base font-semibold text-gray-700 mb-3 border-b border-green-200 pb-2">装備・開花による固定値増加 (合計)</h3>
-            <p class="mb-3 text-xs text-gray-600">※装備や開花による固定値増加分を各項目に入力してください。これらの値はMR補正・覚醒倍率の対象です。</p>
+            
+            <div class="mb-4">
+                <button onclick="setFastestEquipment()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                    ⚡ 最速装備 (すばやさ+179) 適用
+                </button>
+                <p class="mt-1 text-xs text-gray-600 text-center">※内訳: 獣王爪+102、ベスト+43、星腕輪+34</p>
+            </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div id="fixedInputContainer" class="col-span-full grid grid-cols-2 sm:grid-cols-3 gap-4">
                     </div>
             </div>
-        </div>
-
-        <div class="input-group bg-purple-50">
-            <h3 class="text-base font-semibold text-gray-700 mb-3 border-b border-purple-200 pb-2">戦闘中倍率の入力</h3>
-
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">バフ段階 (全ステータス共通倍率)</label>
-                <div id="buffOptions" class="flex flex-wrap gap-2">
-                    </div>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">ステージ効果 (%増加)</label>
-                <div id="stageEffectOptions" class="flex flex-wrap gap-2">
-                    </div>
-            </div>
+            <p class="mt-2 text-xs text-gray-500">※これらの固定値はMR補正・覚醒倍率の乗算対象となります。</p>
         </div>
 
         <div class="w-full bg-white p-4 rounded-lg shadow-2xl border-4 border-red-500/50">
-            <h3 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">最終ステータス結果 (レベル Max)</h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">最終ステータス結果 (Lv Max)</h3>
             
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white border border-gray-200">
                     <thead>
                         <tr class="bg-gray-100">
-                            <th class="py-2 px-2 border-b text-sm font-semibold text-gray-600">ステータス</th>
-                            <th class="py-2 px-2 border-b text-sm font-semibold text-blue-600">基礎 (編成画面)</th>
-                            <th class="py-2 px-2 border-b text-sm font-semibold text-red-600">最終 (戦闘中)</th>
+                            <th class="py-2 px-1 border-b text-xs font-semibold text-gray-600">ステ</th>
+                            <th class="py-2 px-1 border-b text-xs font-semibold text-blue-600">基礎</th>
+                            <th class="py-2 px-1 border-b text-xs font-semibold text-red-600">1up</th>
+                            <th class="py-2 px-1 border-b text-xs font-semibold text-red-600">2up</th>
+                            <th class="py-2 px-1 border-b text-xs font-semibold text-red-600">3up</th>
                         </tr>
                     </thead>
                     <tbody id="statusResultTableBody">
@@ -160,10 +138,10 @@
 
     <div class="author-info">
         <p class="mt-4 text-sm text-gray-500 text-center px-4">
-            このツールは、ゲーム内サイトの解析に基づき、ステータス計算ロジックを再現していますが、
+            このツールは、データ解析に基づく計算ロジックを再現していますが、
             <br>
             <b>計算の正確性やゲーム内データとの完全一致を保証するものではありません。</b> <br>
-            本ツールの利用によって生じた<b>闘技場での失点やその他の損害について、作者は一切責任を負いません。</b>
+            本ツールの利用によって生じた損害について、作者は一切責任を負いません。
         </p>
     </div>
 
@@ -172,35 +150,26 @@
         // 1. 定数定義
         // ----------------------------------------------------
         const DATA_SOURCE_URL = './status.json'; 
-        let charMasterData = []; // JSONから読み込むキャラクターマスターデータ
+        let charMasterData = [];
 
         const STATUS_KEYS = ["HP", "MP", "ATK", "DEF", "AGL", "WIS"];
         const STATUS_LABELS = {
-            "HP": "HP", "MP": "MP", "ATK": "こうげき力", 
-            "DEF": "しゅび力", "AGL": "すばやさ", "WIS": "かしこさ"
+            "HP": "HP", "MP": "MP", "ATK": "攻撃", 
+            "DEF": "守備", "AGL": "素早", "WIS": "賢さ"
         };
         
-        // マスターランク（MR）補正データ (全ステータス共通) - ユーザーの要望に基づき仮定義
-        const MR_DATA = {
-            "スライム": 0.08, "ドラゴン": 0.08, "自然": 0.09, "魔獣": 0.10, 
-            "物質": 0.10, "悪魔": 0.10, "ゾンビ": 0.08, "？？？": 0.09, "英雄": 0.08
-        };
-
-        // バフ倍率データ (全ステータス共通) - ユーザーの要望に基づき仮定義
-        const BUFF_MULTIPLIERS = [
-            { label: "なし", multiplier: 1.00, value: '0' },
-            { label: "+1段階(15%)", multiplier: 1.15, value: '1' }, 
-            { label: "+2段階(30%)", multiplier: 1.30, value: '2' }, 
-            { label: "+3段階(45%)", multiplier: 1.45, value: '3' }
+        // MRボーナスが適用されるステータスの周期的な順番 (1-based index)
+        const MR_BONUS_ORDER = ["HP", "DEF", "AGL", "ATK", "WIS", "MP"];
+        
+        // 固定のバフ倍率 (ステージ効果は考慮せず、バフのみを適用)
+        const BUFF_FINAL_MULTIPLIERS = [
+            { label: "1up", multiplier: 1.15 }, 
+            { label: "2up", multiplier: 1.30 }, 
+            { label: "3up", multiplier: 1.45 }
         ];
 
-        // ステージ効果倍率データ (全ステータス共通)
-        const STAGE_EFFECTS = [
-            { label: "なし", multiplier: 1.00, value: '0' },
-            { label: "すばやさ+30%", multiplier: 1.00, value: '30_agl' }, // AGLのみ1.30、他は1.00
-            { label: "全ステータス+10%", multiplier: 1.10, value: '10' },
-            { label: "全ステータス+20%", multiplier: 1.20, value: '20' }
-        ];
+        // 最速装備の固定値
+        const FASTEST_AGL_VALUE = 179; 
         
         // ----------------------------------------------------
         // 2. データ取得と初期化
@@ -209,7 +178,6 @@
         async function loadMasterData() {
             document.getElementById('charNameDisplay').textContent = 'データを読み込み中...';
             try {
-                // 外部JSONファイルをフェッチ
                 const response = await fetch(DATA_SOURCE_URL); 
                 if (!response.ok) {
                     throw new Error(`データの読み込みに失敗しました: ${response.statusText}`);
@@ -220,11 +188,11 @@
                 populateCharacterSelect();
                 populateAwakeningSelect();
                 populateFixedInputs();
-                populateRadioButtons('buffOptions', BUFF_MULTIPLIERS, 'buffStage', 'updateAllCalculations()', '0');
-                populateRadioButtons('stageEffectOptions', STAGE_EFFECTS, 'stageEffect', 'updateAllCalculations()', '0');
                 
                 // 初期計算を実行
-                document.getElementById('charSelect').value = 0; // デフォルトで最初のキャラを選択
+                document.getElementById('charSelect').value = 0; 
+                document.getElementById('awakeningLevel').value = 5; // 完凸をデフォルト
+                document.getElementById('mrLevel').value = 100; // MR100をデフォルト
                 document.getElementById('charSelect').disabled = false;
                 document.getElementById('awakeningLevel').disabled = false;
                 updateAllCalculations();
@@ -241,10 +209,42 @@
         // ----------------------------------------------------
 
         /**
+         * MRレベルに基づき、指定ステータスのMR補正率 (0.00〜) を計算する
+         * @param {number} mrLevel MRレベル (0-100)
+         * @param {string} statKey ステータスキー ("HP", "MP", ...)
+         * @returns {number} MR補正率 (例: 0.08)
+         */
+        function getMRRate(mrLevel, statKey) {
+            if (mrLevel === 0) return 0;
+            
+            // 該当ステータスが MR_BONUS_ORDER の何番目か (1-based index: HP=1, DEF=2, AGL=3, ATK=4, WIS=5, MP=6)
+            const p = MR_BONUS_ORDER.indexOf(statKey) + 1;
+            if (p === 0) return 0; // MR_BONUS_ORDERにないステータス
+
+            const L0 = mrLevel - 1;
+            
+            // 6サイクル完了回数
+            const cycle = Math.floor(L0 / 6);
+            
+            // 残りのステップ
+            const remainder = L0 % 6;
+            
+            // 基本ボーナス (cycle回数) に、残りのステップで該当ステータスが含まれるか (p <= remainder + 1) を加算
+            let bonusCount = cycle;
+            if (p <= remainder + 1) {
+                bonusCount += 1;
+            }
+
+            return bonusCount / 100; // %を乗率に変換
+        }
+
+
+        /**
          * 基礎ステータス（編成画面）を計算する: Floor((図鑑基礎値 + 覚醒加算値 + 装備・開花固定値) * (1 + MR補正 + 覚醒倍率/100))
          */
         function calculateBaseStatus(baseVal, awkAdd, fixedAdd, mrRate, awkMag) {
             const totalAdditives = baseVal + awkAdd + fixedAdd;
+            // 1 + MR補正率 + 覚醒倍率/100
             const totalMultiplier = 1 + mrRate + (awkMag / 100);
             
             let finalValue = Math.floor(totalAdditives * totalMultiplier);
@@ -252,10 +252,11 @@
         }
 
         /**
-         * 最終ステータス（戦闘中）を計算する: Floor(Base * バフ倍率 * ステージ効果倍率)
+         * 最終ステータス（戦闘中）を計算する: Floor(Base * バフ倍率)
          */
-        function calculateFinalStatus(baseStatus, buffMultiplier, stageMultiplier) {
-            const tempStatus = baseStatus * buffMultiplier * stageMultiplier;
+        function calculateFinalStatus(baseStatus, buffMultiplier) {
+            // ステージ効果は非表示のため、stageMultiplierは常に1.00とみなす
+            const tempStatus = baseStatus * buffMultiplier;
             return Math.floor(tempStatus);
         }
 
@@ -301,20 +302,10 @@
             container.innerHTML = html;
         }
 
-        function populateRadioButtons(containerId, dataArray, name, onChangeFunc, defaultValue) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            
-            dataArray.forEach((item) => {
-                const checked = (item.value === defaultValue) ? 'checked' : '';
-                const html = `
-                    <label class="radio-button-label">
-                        <input type="radio" name="${name}" data-multiplier="${item.multiplier}" value="${item.value}" ${checked} onclick="${onChangeFunc}">
-                        <span>${item.label}</span>
-                    </label>
-                `;
-                container.innerHTML += html;
-            });
+        function setFastestEquipment() {
+            // AGLの固定値入力を179に設定
+            document.getElementById('fixedInputAGL').value = FASTEST_AGL_VALUE;
+            updateAllCalculations();
         }
 
         /**
@@ -325,28 +316,26 @@
 
             const selectedCharIndex = parseInt(document.getElementById('charSelect').value);
             const awakeningLevel = parseInt(document.getElementById('awakeningLevel').value);
+            const mrLevel = parseInt(document.getElementById('mrLevel').value);
 
-            if (isNaN(selectedCharIndex) || isNaN(awakeningLevel)) return;
+            if (isNaN(selectedCharIndex) || isNaN(awakeningLevel) || isNaN(mrLevel)) return;
 
             const char = charMasterData[selectedCharIndex];
             
-            // 系統情報とMR補正率
-            const family = char.family_jp;
-            const mrRate = MR_DATA[family] || 0;
+            // 覚醒データ
             const awakeningData = char.awakening_table.find(item => item.level === awakeningLevel);
 
             // UI情報更新
             document.getElementById('charNameDisplay').textContent = `${char.name_jp}`;
-            document.getElementById('familyDisplay').textContent = family;
-            document.getElementById('mrRateDisplay').textContent = `${(mrRate * 100).toFixed(0)}%`;
+            document.getElementById('mrLevelDisplay').textContent = mrLevel;
 
-            // バフとステージ効果の倍率取得
-            const buffElement = document.querySelector('input[name="buffStage"]:checked');
-            const buffMultiplier = buffElement ? parseFloat(buffElement.getAttribute('data-multiplier')) : 1.00;
-
-            const stageElement = document.querySelector('input[name="stageEffect"]:checked');
-            const stageMultiplierValue = stageElement ? stageElement.value : '0';
-            const stageMultiplierBase = stageElement ? parseFloat(stageElement.getAttribute('data-multiplier')) : 1.00;
+            // MR補正率のサマリー表示を生成
+            let mrSummaryHtml = '';
+            STATUS_KEYS.forEach(key => {
+                const mrRate = getMRRate(mrLevel, key);
+                mrSummaryHtml += `${STATUS_LABELS[key]}: +${(mrRate * 100).toFixed(0)}% / `;
+            });
+            document.getElementById('mrRateSummary').textContent = mrSummaryHtml.slice(0, -3); // 最後の ' / ' を削除
 
             let resultHtml = '';
             
@@ -357,29 +346,25 @@
                 const awkMag = awakeningData.magnifiers[i]; // %
                 const fixedAdd = parseInt(document.getElementById(`fixedInput${key}`).value) || 0;
                 
-                // 2. ステージ効果の調整
-                let effectiveStageMultiplier = stageMultiplierBase;
-                
-                // AGLのみ+30%の特殊処理 (stageMultiplierValueが '30_agl' の場合)
-                if (key === 'AGL' && stageMultiplierValue === '30_agl') {
-                    effectiveStageMultiplier = 1.30;
-                } else if (stageMultiplierValue === '30_agl') {
-                    // それ以外のステータスは影響を受けないため1.00
-                    effectiveStageMultiplier = 1.00;
-                }
+                // 2. MR補正率の計算 (MRレベルとステータスごとに変動)
+                const mrRate = getMRRate(mrLevel, key);
 
                 // 3. 基礎ステータスの計算
                 const baseStatus = calculateBaseStatus(baseVal, awkAdd, fixedAdd, mrRate, awkMag);
 
-                // 4. 最終ステータスの計算
-                const finalStatus = calculateFinalStatus(baseStatus, buffMultiplier, effectiveStageMultiplier);
+                // 4. 最終ステータスの計算 (1up, 2up, 3up)
+                let finalStatusCells = `<td class="result-cell text-blue-600 bg-blue-50 border-b border-r">${baseStatus.toLocaleString()}</td>`;
+
+                BUFF_FINAL_MULTIPLIERS.forEach(buff => {
+                    const finalStatus = calculateFinalStatus(baseStatus, buff.multiplier);
+                    finalStatusCells += `<td class="result-cell text-red-600 bg-red-50 border-b border-r">${finalStatus.toLocaleString()}</td>`;
+                });
 
                 // 5. 結果をHTMLに追加
                 resultHtml += `
                     <tr>
                         <td class="result-cell font-bold text-gray-800 border-b border-r">${STATUS_LABELS[key]}</td>
-                        <td class="result-cell text-blue-600 bg-blue-50 border-b border-r">${baseStatus.toLocaleString()}</td>
-                        <td class="result-cell text-red-600 bg-red-50 border-b">${finalStatus.toLocaleString()}</td>
+                        ${finalStatusCells}
                     </tr>
                 `;
             });
