@@ -113,12 +113,18 @@
         <div class="input-group bg-green-50">
             <h3 class="text-base font-semibold text-gray-700 mb-3 border-b border-green-200 pb-2">装備・開花による固定値増加 (合計)</h3>
             
-            <div class="mb-4">
-                <button onclick="setFastestEquipment()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+            <div class="mb-4 flex flex-wrap gap-2 justify-center">
+                <button onclick="setFixedAgl(FASTEST_AGL_VALUE, true)" class="flex-1 min-w-[150px] bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
                     ⚡ 最速装備 (すばやさ+182) 適用
                 </button>
-                <p class="mt-1 text-xs text-gray-600 text-center">
-                    ※内訳: 獣王爪+102、ベスト+43、星腕輪+37 (<span class="font-bold">34+all3</span>)
+                <button onclick="setFixedAgl(15, false)" class="flex-1 min-w-[150px] bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                    開花枝 (すばやさ+15) 加算
+                </button>
+                <button onclick="setFixedAgl(40, false)" class="flex-1 min-w-[150px] bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                    開花花 (すばやさ+40) 加算
+                </button>
+                <p class="mt-1 text-xs text-gray-600 text-center w-full">
+                    ※最速装備: 獣王爪+102、ベスト+43、星腕輪+37 (34+all3)
                 </p>
             </div>
 
@@ -194,8 +200,6 @@
         const MR_BONUS_ORDER = ["HP", "DEF", "AGL", "ATK", "WIS", "MP"];
         
         // ステータスごとのバフ倍率 [1up, 2up, 3up] (1.00 = 0% バフ)
-        // HP: 闘技場補正1.30倍を適用 (最終値に乗算)
-        // MP: 常に1.00 (表示は '-')
         const BUFF_RATES_BY_STAT = {
             "HP": [1.30, 1.30, 1.30], // 闘技場補正1.30倍
             "MP": [1.00, 1.00, 1.00], 
@@ -362,17 +366,30 @@
         }
 
         /**
-         * 最速装備ボタンの処理
+         * 固定値入力欄をリセットし、指定されたAGL値のみを設定する（リセット機能付き）
+         * @param {number} aglValue - 設定する素早さの値
+         * @param {boolean} shouldResetAll - 他の固定値をリセットするかどうか (true: 最速装備, false: 開花)
          */
-        function setFastestEquipment() {
-            STATUS_KEYS.forEach(key => {
-                if (key !== 'AGL') {
-                    document.getElementById(`fixedInput${key}`).value = 0;
-                }
-            });
-            document.getElementById('fixedInputAGL').value = FASTEST_AGL_VALUE;
+        function setFixedAgl(aglValue, shouldResetAll) {
+            const aglInput = document.getElementById('fixedInputAGL');
+            const currentAgl = parseInt(aglInput.value) || 0;
+            
+            if (shouldResetAll) {
+                // 最速装備ボタンの場合: AGL以外の全ての固定値をリセット
+                STATUS_KEYS.forEach(key => {
+                    if (key !== 'AGL') {
+                        document.getElementById(`fixedInput${key}`).value = 0;
+                    }
+                });
+                aglInput.value = aglValue; // AGLは上書き
+            } else {
+                // 開花ボタンの場合: 現在の値に加算
+                aglInput.value = currentAgl + aglValue;
+            }
+            
             updateAllCalculations();
         }
+
         
         /**
          * 現在の入力値を元にURLのGETパラメータを更新する
@@ -441,10 +458,14 @@
 
                 // 3. 基礎ステータス (Buff 0 / 編成画面) の計算
                 let baseStatusForTable; // 表の「基礎」列に表示する値
-                
+                let hpPvPValue = 0; // 闘技場補正後のHP値 (HP以外は0)
+
+                // HPの基礎値は、闘技場補正なしで計算
                 if (key === 'HP') {
-                    // HPは常に闘技場補正1.30倍を適用して切り捨て
-                    baseStatusForTable = Math.floor(totalAdditives * baseMultiplier * 1.30);
+                    // HP 基礎: 補正なしで計算 (編成画面値)
+                    baseStatusForTable = Math.floor(totalAdditives * baseMultiplier);
+                    // HP 闘技場値: 1.30倍補正を適用して計算
+                    hpPvPValue = Math.floor(totalAdditives * baseMultiplier * 1.30);
                 } else {
                     // ATK/DEF/AGL/WIS/MPは Buff 0 の状態で切り捨て
                     baseStatusForTable = Math.floor(totalAdditives * baseMultiplier);
@@ -458,20 +479,16 @@
                 
                 for (let j = 0; j < 3; j++) {
                     let cellContent;
-                    const fullBuffMultiplier = buffMultipliers[j]; // 例: AGL 1up -> 1.20
+                    const fullBuffMultiplier = buffMultipliers[j]; 
 
                     if (key === 'MP') {
                         cellContent = "-"; // MPは '-' 表示
                     } else if (key === 'HP') {
-                        // HPは常に基礎値と同じ (闘技場補正後の値)
-                        cellContent = baseStatusForTable.toLocaleString();
+                        // HPは1up, 2up, 3upで闘技場補正後の値を使用
+                        cellContent = hpPvPValue.toLocaleString();
                     } else {
                         // ATK, DEF, AGL, WIS: Buff RateをBase Multiplierに追加し、一度だけ切り捨て
-                        
-                        // Buff Rate % (例: AGL 1up -> 1.20 - 1 = 0.20)
                         const buffRatePercentage = fullBuffMultiplier - 1; 
-                        
-                        // 最終倍率 = M_Base + Buff Rate %
                         const finalMultiplier = baseMultiplier + buffRatePercentage; 
                         
                         const finalStatus = Math.floor(totalAdditives * finalMultiplier);
