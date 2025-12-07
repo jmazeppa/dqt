@@ -9,7 +9,9 @@
       { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
       { "level": 2, "additives": [60, 0, 30, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
       { "level": 3, "additives": [90, 0, 45, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
-      { "level": 4, "additives": [120, 0, 60, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20], "characteristic_additives": [0, 0, 0, 0, 40, 0] },
+      // 4凸までは特性ボーナスなし
+      { "level": 4, "additives": [120, 0, 60, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      // 5凸特性 (すばやさ+40) がここで発動
       { "level": 5, "additives": [120, 0, 60, 0, 0, 0], "magnifiers": [25, 25, 25, 25, 25, 25], "characteristic_additives": [0, 0, 0, 0, 40, 0] }
     ]
   },
@@ -33,7 +35,9 @@
     "family_jp": "英雄",
     "base_status_at_max_level": [1095, 478, 261, 413, 437, 175],
     "awakening_table": [
-      { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      // 0凸特性 (HP+30, AGL+20) がここで発動
+      { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0], "characteristic_additives": [30, 0, 0, 0, 20, 0] },
+      // 1凸以降は特性値は固定で、additivesに標準ボーナスが累積
       { "level": 1, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5], "characteristic_additives": [30, 0, 0, 0, 20, 0] },
       { "level": 2, "additives": [30, 0, 0, 0, 20, 0], "magnifiers": [10, 10, 10, 10, 10, 10], "characteristic_additives": [30, 0, 0, 0, 20, 0] },
       { "level": 3, "additives": [60, 0, 0, 0, 40, 0], "magnifiers": [15, 15, 15, 15, 15, 15], "characteristic_additives": [30, 0, 0, 0, 20, 0] },
