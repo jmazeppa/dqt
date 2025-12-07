@@ -5,12 +5,12 @@
     "family_jp": "英雄",
     "base_status_at_max_level": [1054, 451, 457, 362, 391, 113],
     "awakening_table": [
-      { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
-      { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
-      { "level": 2, "additives": [60, 0, 30, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
-      { "level": 3, "additives": [90, 0, 45, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
-      { "level": 4, "additives": [120, 0, 60, 0, 40, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
-      { "level": 5, "additives": [120, 0, 60, 0, 40, 0], "magnifiers": [25, 25, 25, 25, 25, 25] }
+      { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      { "level": 2, "additives": [60, 0, 30, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      { "level": 3, "additives": [90, 0, 45, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      { "level": 4, "additives": [120, 0, 60, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20], "characteristic_additives": [0, 0, 0, 0, 40, 0] },
+      { "level": 5, "additives": [120, 0, 60, 0, 0, 0], "magnifiers": [25, 25, 25, 25, 25, 25], "characteristic_additives": [0, 0, 0, 0, 40, 0] }
     ]
   },
   {
@@ -19,12 +19,12 @@
     "family_jp": "悪魔",
     "base_status_at_max_level": [1073, 430, 329, 321, 378, 162],
     "awakening_table": [
-      { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
-      { "level": 1, "additives": [30, 15, 0, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
-      { "level": 2, "additives": [60, 30, 0, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
-      { "level": 3, "additives": [90, 45, 0, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
-      { "level": 4, "additives": [120, 60, 0, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
-      { "level": 5, "additives": [120, 60, 0, 0, 0, 0], "magnifiers": [25, 25, 25, 25, 25, 25] }
+      { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      { "level": 1, "additives": [30, 15, 0, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      { "level": 2, "additives": [60, 30, 0, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      { "level": 3, "additives": [90, 45, 0, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      { "level": 4, "additives": [120, 60, 0, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      { "level": 5, "additives": [120, 60, 0, 0, 0, 0], "magnifiers": [25, 25, 25, 25, 25, 25], "characteristic_additives": [0, 0, 0, 0, 0, 0] }
     ]
   },
   {
@@ -33,12 +33,12 @@
     "family_jp": "英雄",
     "base_status_at_max_level": [1095, 478, 261, 413, 437, 175],
     "awakening_table": [
-      { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
-      { "level": 1, "additives": [30, 0, 0, 0, 20, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
-      { "level": 2, "additives": [60, 0, 0, 0, 40, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
-      { "level": 3, "additives": [90, 0, 0, 0, 60, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
-      { "level": 4, "additives": [120, 0, 0, 0, 80, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
-      { "level": 5, "additives": [120, 0, 0, 0, 80, 0], "magnifiers": [25, 25, 25, 25, 25, 25] }
+      { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+      { "level": 1, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5], "characteristic_additives": [30, 0, 0, 0, 20, 0] },
+      { "level": 2, "additives": [30, 0, 0, 0, 20, 0], "magnifiers": [10, 10, 10, 10, 10, 10], "characteristic_additives": [30, 0, 0, 0, 20, 0] },
+      { "level": 3, "additives": [60, 0, 0, 0, 40, 0], "magnifiers": [15, 15, 15, 15, 15, 15], "characteristic_additives": [30, 0, 0, 0, 20, 0] },
+      { "level": 4, "additives": [90, 0, 0, 0, 60, 0], "magnifiers": [20, 20, 20, 20, 20, 20], "characteristic_additives": [30, 0, 0, 0, 20, 0] },
+      { "level": 5, "additives": [90, 0, 0, 0, 60, 0], "magnifiers": [25, 25, 25, 25, 25, 25], "characteristic_additives": [30, 0, 0, 0, 20, 0] }
     ]
   },
   {
@@ -47,12 +47,12 @@
     "family_jp": "？？？",
     "base_status_at_max_level": [1009, 344, 459, 394, 332, 208],
     "awakening_table": [
-        { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
-        { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
-        { "level": 2, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
-        { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
-        { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
-        { "level": 5, "additives": [150, 30, 15, 25, 55, 15], "magnifiers": [25, 25, 25, 25, 25, 25] }
+        { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 2, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 5, "additives": [150, 30, 15, 25, 55, 15], "magnifiers": [25, 25, 25, 25, 25, 25], "characteristic_additives": [0, 0, 0, 0, 0, 0] }
     ]
   },
   {
@@ -61,12 +61,12 @@
     "family_jp": "物質",
     "base_status_at_max_level": [1072, 346, 468, 348, 372, 113],
     "awakening_table": [
-        { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
-        { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
-        { "level": 2, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
-        { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
-        { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
-        { "level": 5, "additives": [150, 30, 15, 25, 15, 15], "magnifiers": [25, 25, 25, 25, 25, 25] }
+        { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 2, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 5, "additives": [150, 30, 15, 25, 15, 15], "magnifiers": [25, 25, 25, 25, 25, 25], "characteristic_additives": [0, 0, 0, 0, 0, 0] }
     ]
   },
   {
@@ -75,12 +75,12 @@
     "family_jp": "？？？",
     "base_status_at_max_level": [1105, 476, 490, 265, 470, 176],
     "awakening_table": [
-        { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
-        { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
-        { "level": 2, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10] },
-        { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15] },
-        { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20] },
-        { "level": 5, "additives": [150, 30, 15, 75, 15, 15], "magnifiers": [25, 25, 25, 25, 25, 25] }
+        { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 1, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [5, 5, 5, 5, 5, 5], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 2, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [10, 10, 10, 10, 10, 10], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 3, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [15, 15, 15, 15, 15, 15], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 4, "additives": [30, 0, 15, 0, 0, 0], "magnifiers": [20, 20, 20, 20, 20, 20], "characteristic_additives": [0, 0, 0, 0, 0, 0] },
+        { "level": 5, "additives": [150, 30, 15, 75, 15, 15], "magnifiers": [25, 25, 25, 25, 25, 25], "characteristic_additives": [0, 0, 0, 0, 0, 0] }
     ]
   }
 ]

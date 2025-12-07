@@ -188,7 +188,7 @@
             なおこのHTMLコードはGoogleのGeminiによって生成されました。
         </p>
         <div class="version-info mt-3 text-center">
-            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.2</p>
+            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.6 (特性データ覚醒レベル対応)</p>
         </div>
     </div>
 
@@ -234,26 +234,24 @@
 
         // 最速装備の固定値
         const FASTEST_AGL_VALUE = 182; 
-
+        
         // ----------------------------------------------------
         // 2. データ取得と初期化
         // ----------------------------------------------------
         
         /**
-         * iFrame内にいるかどうか、かつ親ウィンドウとオリジンが異なるか (クロスオリジン) を判定する。
-         * Google Sitesの「HTMLを埋め込む」機能はこれに該当する。
+         * Google Sitesの「HTMLを埋め込む」機能による制限付きサンドボックス内にいるかを判定する。
          */
-        function isCrossOriginIframe() {
+        function isGoogleSitesEmbed() {
             if (window.self === window.top) {
-                return false; // iFrame内にいない
+                return false; 
             }
-            try {
-                // 親のURLにアクセスを試みる。クロスオリジンの場合はセキュリティエラーでcatchされる。
-                void window.parent.location.href; 
-                return false; // アクセス成功 = 同一オリジン (制限なし)
-            } catch (e) {
-                return true; // アクセス失敗 = クロスオリジン (制限あり)
+            
+            const iframeUrl = window.location.href;
+            if (iframeUrl.includes('sites.google.com') || iframeUrl.includes('googleusercontent.com')) {
+                return true;
             }
+            return false;
         }
 
         async function loadMasterData() {
@@ -261,7 +259,6 @@
                 // 変更されたDATA_SOURCE_URLからデータを読み込む
                 const response = await fetch(DATA_SOURCE_URL); 
                 if (!response.ok) {
-                    // CORS問題やURLの入力間違いをユーザーに促すエラーメッセージ
                     throw new Error(`データファイル (${DATA_SOURCE_URL}) の読み込みに失敗しました。URLが正しいか、GitHub Pagesが有効か確認してください。`);
                 }
                 charMasterData = await response.json();
@@ -275,10 +272,8 @@
                 document.getElementById('charSelect').disabled = false;
                 document.getElementById('awakeningLevel').disabled = false;
 
-                // ----------------------------------------------------
-                // 5. Google Sites埋め込み制限の処理: クロスオリジンiFrameの場合、共有機能を非表示にする
-                // ----------------------------------------------------
-                if (isCrossOriginIframe()) {
+                // Google Sites埋め込み制限の処理
+                if (isGoogleSitesEmbed()) {
                     const shareGroup = document.getElementById('shareInputGroup');
                     if (shareGroup) {
                         shareGroup.classList.add('hidden');
@@ -297,7 +292,6 @@
          * GETパラメータから初期値を読み込み、フォームに反映する
          */
         function initializeFromQueryParameters() {
-            // iFrame自身のURLのパラメータを読み込む
             const urlParams = new URLSearchParams(window.location.search);
             
             const idKey = Object.keys(QUERY_KEYS).find(key => QUERY_KEYS[key] === "charId");
@@ -461,7 +455,7 @@
         }
 
         /**
-         * メイン計算処理 (切り捨てタイミングを考慮した修正版)
+         * メイン計算処理 (特性ボーナスを覚醒テーブルから読み込むように修正)
          */
         function updateAllCalculations() {
             if (charMasterData.length === 0) return;
@@ -474,6 +468,7 @@
             if (!char) return;
             
             const awakeningData = char.awakening_table.find(item => item.level === awakeningLevel);
+            if (!awakeningData) return;
 
             // UI情報更新
             document.getElementById('mrLevelDisplay').textContent = mrLevel;
@@ -485,7 +480,7 @@
             let resultHtml = '';
             
             STATUS_KEYS.forEach((key, i) => {
-                // 1. 基本値の取得と計算
+                // 1. 基本値の取得、覚醒固定値、装備固定値、特性ボーナスの計算
                 const baseVal = char.base_status_at_max_level[i];
                 const awkAdd = awakeningData.additives[i];
                 const awkMag = awakeningData.magnifiers[i]; // %
@@ -493,18 +488,33 @@
                 const fixedAdd = parseInt(fixedInputElement.value) || 0;
                 fixedValues[key] = fixedAdd; 
                 
-                // 2. Additive Base (A) と Base Multiplier (M_Base) の計算
-                const totalAdditives = baseVal + awkAdd + fixedAdd;
+                // ★★★ 2. 特性による固定値ボーナスを JSON の awakening_table から読み込む ★★★
+                // characteristic_additives が存在する場合、覚醒加算値に加算する
+                let characteristicAdd = 0;
+                if (awakeningData.characteristic_additives && typeof awakeningData.characteristic_additives[i] === 'number') {
+                    characteristicAdd = awakeningData.characteristic_additives[i];
+                }
+
+                // 3. Additive Base (A) と Base Multiplier (M_Base) の計算
+                // 全ての加算値 (基礎+標準覚醒増分+装備+特性) を合算
+                const totalAdditives = baseVal + awkAdd + fixedAdd + characteristicAdd; 
+                
                 const mrRate = getMRRate(mrLevel, key);
                 const baseMultiplier = 1 + mrRate + (awkMag / 100);
                 
                 // MR補正率のサマリー表示 (AGL強調)
-                const rateString = `+${(mrRate * 100).toFixed(0)}%`;
+                let rateString = `+${(mrRate * 100).toFixed(0)}%`;
+                
+                // 特性ボーナスがあれば追記
+                if (characteristicAdd > 0) {
+                    rateString += ` (+${characteristicAdd}特性)`;
+                }
+
                 const spanClass = (key === 'AGL') ? 'font-extrabold text-red-600' : 'font-bold text-gray-800';
                 mrSummaryHtml += `${STATUS_LABELS[key]}: <span class="${spanClass}">${rateString}</span> / `;
 
 
-                // 3. 基礎ステータス (Buff 0 / 編成画面) の計算
+                // 4. 基礎ステータス (Buff 0 / 編成画面) の計算
                 let baseStatusForTable; // 表の「基礎」列に表示する値
                 let hpPvPValue = 0; // 闘技場補正後のHP値 (HP以外は0)
 
@@ -522,7 +532,7 @@
                 let finalStatusCells = `<td class="result-cell text-blue-600 bg-blue-50 border-r">${baseStatusForTable.toLocaleString()}</td>`;
 
 
-                // 4. 戦闘中ステータス (1up, 2up, 3up) の計算
+                // 5. 戦闘中ステータス (1up, 2up, 3up) の計算
                 const buffMultipliers = BUFF_RATES_BY_STAT[key];
                 
                 for (let j = 0; j < 3; j++) {
@@ -546,7 +556,7 @@
                     finalStatusCells += `<td class="result-cell text-red-600 bg-red-50 border-r">${cellContent}</td>`;
                 }
 
-                // 5. 結果をHTMLに追加
+                // 6. 結果をHTMLに追加
                 const rowClass = (key === 'AGL') ? "agl-row-highlight" : "border-b border-gray-200";
                 const statLabelClass = (key === 'AGL') ? "agl-text-highlight result-cell font-extrabold border-r" : "result-cell font-bold text-gray-800 border-r";
                 
