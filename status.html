@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DQTact 全ステータス計算ツール</title>
+    <title>DQT ステータス計算</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
         /* Google Site埋め込み・iframe対応の基本スタイル */
         body {
@@ -22,8 +22,8 @@
             margin-bottom: 1.5rem;
         }
         .main-title h1 {
-            font-size: clamp(1.5rem, 4.5vw, 2.2rem);
-            font-weight: 800;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            font-weight: 900;
             color: transparent;
             background-image: linear-gradient(to right, #3b82f6, #4f46e5);
             -webkit-background-clip: text;
@@ -38,11 +38,11 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
         .result-cell {
-            font-size: 0.9rem; /* スマホ向けに少し小さく */
+            font-size: 0.9rem; 
             font-weight: 700;
             padding: 0.5rem 0.25rem;
             text-align: center;
-            white-space: nowrap; /* 結果の改行を防ぐ */
+            white-space: nowrap; 
         }
         .input-group {
             background-color: #fff;
@@ -50,14 +50,23 @@
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
+        /* AGL行の強調スタイル */
+        .agl-row-highlight {
+            border-bottom-width: 4px;
+            border-color: #f87171; 
+            background-color: #fff7ed; 
+            font-family: 'Inter', sans-serif;
+        }
+        .agl-text-highlight {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: #dc2626; 
+        }
     </style>
 </head>
 <body onload="loadMasterData()">
     <div class="main-title">
-        <h1 class="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600">
-            DQTact ステータス計算ツール
-        </h1>
-        <h2 id="charNameDisplay" class="text-xl font-bold text-gray-700 mt-1">データを読み込み中...</h2>
+        <h1>DQT ステータス計算</h1>
     </div>
 
     <div class="container flex flex-col space-y-6">
@@ -85,10 +94,14 @@
 
         <div class="input-group bg-yellow-50">
             <label for="mrLevel" class="block text-base font-semibold text-gray-700 mb-2">
-                マスターランク (MR) レベル: <span id="mrLevelDisplay" class="font-extrabold text-red-600">0</span>
+                マスターランク (MR) レベル: <span id="mrLevelDisplay" class="font-extrabold text-red-600">70</span>
             </label>
-            <input type="range" id="mrLevel" oninput="updateAllCalculations()" min="0" max="100" value="0"
-                   class="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer range-lg">
+            <div class="flex items-center space-x-2">
+                <input type="range" id="mrLevel" oninput="updateAllCalculations()" min="0" max="100" value="70"
+                       class="flex-grow h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer range-lg">
+                <button onclick="adjustMrLevel(-1)" class="px-3 py-1 bg-yellow-400 hover:bg-yellow-500 rounded-lg font-bold text-sm shadow-md transition duration-150">-1</button>
+                <button onclick="adjustMrLevel(2)" class="px-3 py-1 bg-yellow-400 hover:bg-yellow-500 rounded-lg font-bold text-sm shadow-md transition duration-150">+2</button>
+            </div>
             
             <div class="mt-3 text-sm text-gray-600 space-y-1 p-2 bg-yellow-100 rounded-md">
                 <p>現在MRレベルによる補正率:</p>
@@ -102,9 +115,11 @@
             
             <div class="mb-4">
                 <button onclick="setFastestEquipment()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
-                    ⚡ 最速装備 (すばやさ+179) 適用
+                    ⚡ 最速装備 (すばやさ+182) 適用
                 </button>
-                <p class="mt-1 text-xs text-gray-600 text-center">※内訳: 獣王爪+102、ベスト+43、星腕輪+34</p>
+                <p class="mt-1 text-xs text-gray-600 text-center">
+                    ※内訳: 獣王爪+102、ベスト+43、星腕輪+37 (<span class="font-bold">34+all3</span>)
+                </p>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -133,6 +148,13 @@
                 </table>
             </div>
         </div>
+
+        <div class="input-group bg-indigo-50 text-center">
+            <button onclick="shareUrl()" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 shadow-lg text-lg">
+                🔗 現在の設定URLを共有
+            </button>
+            <p id="shareMessage" class="mt-2 text-sm text-green-700 hidden">URLをクリップボードにコピーしました！</p>
+        </div>
         
     </div>
 
@@ -158,10 +180,17 @@
             "DEF": "守備", "AGL": "素早", "WIS": "賢さ"
         };
         
+        // GETパラメータのキーとステータスの対応
+        const QUERY_KEYS = {
+            "id": "charId", "awk": "awakeningLevel", "mr": "mrLevel",
+            "fxH": "HP", "fxM": "MP", "fxA": "ATK",
+            "fxD": "DEF", "fxG": "AGL", "fxW": "WIS"
+        };
+
         // MRボーナスが適用されるステータスの周期的な順番 (1-based index)
         const MR_BONUS_ORDER = ["HP", "DEF", "AGL", "ATK", "WIS", "MP"];
         
-        // 固定のバフ倍率 (ステージ効果は考慮せず、バフのみを適用)
+        // 固定のバフ倍率
         const BUFF_FINAL_MULTIPLIERS = [
             { label: "1up", multiplier: 1.15 }, 
             { label: "2up", multiplier: 1.30 }, 
@@ -169,14 +198,13 @@
         ];
 
         // 最速装備の固定値
-        const FASTEST_AGL_VALUE = 179; 
-        
+        const FASTEST_AGL_VALUE = 182; 
+
         // ----------------------------------------------------
         // 2. データ取得と初期化
         // ----------------------------------------------------
 
         async function loadMasterData() {
-            document.getElementById('charNameDisplay').textContent = 'データを読み込み中...';
             try {
                 const response = await fetch(DATA_SOURCE_URL); 
                 if (!response.ok) {
@@ -189,62 +217,105 @@
                 populateAwakeningSelect();
                 populateFixedInputs();
                 
-                // 初期計算を実行
-                document.getElementById('charSelect').value = 0; 
-                document.getElementById('awakeningLevel').value = 5; // 完凸をデフォルト
-                document.getElementById('mrLevel').value = 100; // MR100をデフォルト
+                // GETパラメータから初期値を設定
+                initializeFromQueryParameters();
+
+                // UIの有効化
                 document.getElementById('charSelect').disabled = false;
                 document.getElementById('awakeningLevel').disabled = false;
-                updateAllCalculations();
+                
+                updateAllCalculations(); // 初期計算を実行
 
             } catch (error) {
                 console.error("データの読み込みエラー:", error);
                 document.getElementById('charSelect').innerHTML = `<option value="" disabled selected>エラー: データが読み込めませんでした。</option>`;
-                document.getElementById('charNameDisplay').textContent = '計算機を利用できません (データロードエラー)';
+                // エラー時のタイトル表示はそのまま
             }
         }
 
+        /**
+         * GETパラメータから初期値を読み込み、フォームに反映する
+         */
+        function initializeFromQueryParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // 1. キャラクターID (id)
+            const charIdFromUrl = urlParams.get(Object.keys(QUERY_KEYS).find(key => QUERY_KEYS[key] === "charId"));
+            if (charIdFromUrl) {
+                const charSelect = document.getElementById('charSelect');
+                if (charSelect.querySelector(`option[value="${charIdFromUrl}"]`)) {
+                    charSelect.value = charIdFromUrl;
+                }
+            } else {
+                // IDがない場合、デフォルトで最初のキャラを選択
+                document.getElementById('charSelect').value = charMasterData[0].id;
+            }
+
+            // 2. 覚醒レベル (awk)
+            const awkLevelFromUrl = urlParams.get(Object.keys(QUERY_KEYS).find(key => QUERY_KEYS[key] === "awakeningLevel"));
+            document.getElementById('awakeningLevel').value = awkLevelFromUrl ? Math.max(0, Math.min(5, parseInt(awkLevelFromUrl))) : 5; 
+
+            // 3. MRレベル (mr)
+            const mrLevelFromUrl = urlParams.get(Object.keys(QUERY_KEYS).find(key => QUERY_KEYS[key] === "mrLevel"));
+            document.getElementById('mrLevel').value = mrLevelFromUrl ? Math.max(0, Math.min(100, parseInt(mrLevelFromUrl))) : 70;
+            document.getElementById('mrLevelDisplay').textContent = document.getElementById('mrLevel').value;
+
+            // 4. 固定値 (fxH, fxM, fxA, fxD, fxG, fxW)
+            STATUS_KEYS.forEach(key => {
+                const queryKey = Object.keys(QUERY_KEYS).find(q => QUERY_KEYS[q] === key);
+                const fixedValueFromUrl = urlParams.get(queryKey);
+                document.getElementById(`fixedInput${key}`).value = fixedValueFromUrl ? Math.max(0, parseInt(fixedValueFromUrl)) : 0;
+            });
+        }
+
+
         // ----------------------------------------------------
-        // 3. 計算関数
+        // 3. MR/計算ロジック
         // ----------------------------------------------------
 
         /**
-         * MRレベルに基づき、指定ステータスのMR補正率 (0.00〜) を計算する
-         * @param {number} mrLevel MRレベル (0-100)
-         * @param {string} statKey ステータスキー ("HP", "MP", ...)
-         * @returns {number} MR補正率 (例: 0.08)
+         * MRレベルを調整し、計算を更新する
+         */
+        function adjustMrLevel(adjustment) {
+            const input = document.getElementById('mrLevel');
+            let currentValue = parseInt(input.value);
+            let newValue = currentValue + adjustment;
+            
+            if (newValue < 0) newValue = 0;
+            if (newValue > 100) newValue = 100;
+            
+            input.value = newValue;
+            document.getElementById('mrLevelDisplay').textContent = newValue;
+            updateAllCalculations();
+        }
+
+        /**
+         * MRレベルに基づき、指定ステータスのMR補正率を計算する
          */
         function getMRRate(mrLevel, statKey) {
             if (mrLevel === 0) return 0;
             
-            // 該当ステータスが MR_BONUS_ORDER の何番目か (1-based index: HP=1, DEF=2, AGL=3, ATK=4, WIS=5, MP=6)
             const p = MR_BONUS_ORDER.indexOf(statKey) + 1;
-            if (p === 0) return 0; // MR_BONUS_ORDERにないステータス
+            if (p === 0) return 0; 
 
             const L0 = mrLevel - 1;
             
-            // 6サイクル完了回数
             const cycle = Math.floor(L0 / 6);
-            
-            // 残りのステップ
             const remainder = L0 % 6;
             
-            // 基本ボーナス (cycle回数) に、残りのステップで該当ステータスが含まれるか (p <= remainder + 1) を加算
             let bonusCount = cycle;
             if (p <= remainder + 1) {
                 bonusCount += 1;
             }
 
-            return bonusCount / 100; // %を乗率に変換
+            return bonusCount / 100; 
         }
 
-
         /**
-         * 基礎ステータス（編成画面）を計算する: Floor((図鑑基礎値 + 覚醒加算値 + 装備・開花固定値) * (1 + MR補正 + 覚醒倍率/100))
+         * 基礎ステータス（編成画面）を計算する
          */
         function calculateBaseStatus(baseVal, awkAdd, fixedAdd, mrRate, awkMag) {
             const totalAdditives = baseVal + awkAdd + fixedAdd;
-            // 1 + MR補正率 + 覚醒倍率/100
             const totalMultiplier = 1 + mrRate + (awkMag / 100);
             
             let finalValue = Math.floor(totalAdditives * totalMultiplier);
@@ -252,24 +323,23 @@
         }
 
         /**
-         * 最終ステータス（戦闘中）を計算する: Floor(Base * バフ倍率)
+         * 最終ステータス（戦闘中）を計算する
          */
         function calculateFinalStatus(baseStatus, buffMultiplier) {
-            // ステージ効果は非表示のため、stageMultiplierは常に1.00とみなす
             const tempStatus = baseStatus * buffMultiplier;
             return Math.floor(tempStatus);
         }
 
         // ----------------------------------------------------
-        // 4. UI生成と更新
+        // 4. UI生成/更新とメインロジック
         // ----------------------------------------------------
 
         function populateCharacterSelect() {
             const select = document.getElementById('charSelect');
             select.innerHTML = ''; 
-            charMasterData.forEach((char, index) => {
+            charMasterData.forEach((char) => {
                 const option = document.createElement('option');
-                option.value = index;
+                option.value = char.id; // キャラクターIDを使用
                 option.textContent = char.name_jp;
                 select.appendChild(option);
             });
@@ -282,7 +352,6 @@
                 const option = document.createElement('option');
                 option.value = level;
                 option.textContent = `${level}凸 (${level === 5 ? '完凸' : level === 0 ? '無覚醒' : level + '段階覚醒'})`;
-                if (level === 5) option.selected = true; 
                 select.appendChild(option);
             }
         }
@@ -302,10 +371,41 @@
             container.innerHTML = html;
         }
 
+        /**
+         * 最速装備ボタンの処理
+         */
         function setFastestEquipment() {
-            // AGLの固定値入力を179に設定
+            STATUS_KEYS.forEach(key => {
+                if (key !== 'AGL') {
+                    document.getElementById(`fixedInput${key}`).value = 0;
+                }
+            });
             document.getElementById('fixedInputAGL').value = FASTEST_AGL_VALUE;
             updateAllCalculations();
+        }
+        
+        /**
+         * 現在の入力値を元にURLのGETパラメータを更新する
+         */
+        function updateUrlParameters(charId, awkLevel, mrLevel, fixedValues) {
+            const params = new URLSearchParams();
+            
+            // ID, 覚醒, MR
+            params.set('id', charId);
+            params.set('awk', awkLevel);
+            params.set('mr', mrLevel);
+
+            // 固定値
+            STATUS_KEYS.forEach(key => {
+                const queryKey = Object.keys(QUERY_KEYS).find(q => QUERY_KEYS[q] === key);
+                if (fixedValues[key] && parseInt(fixedValues[key]) !== 0) {
+                     params.set(queryKey, fixedValues[key]);
+                }
+            });
+
+            // URLを更新
+            const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
+            history.replaceState(null, '', newUrl);
         }
 
         /**
@@ -314,28 +414,28 @@
         function updateAllCalculations() {
             if (charMasterData.length === 0) return;
 
-            const selectedCharIndex = parseInt(document.getElementById('charSelect').value);
+            const selectedCharId = parseInt(document.getElementById('charSelect').value);
             const awakeningLevel = parseInt(document.getElementById('awakeningLevel').value);
             const mrLevel = parseInt(document.getElementById('mrLevel').value);
 
-            if (isNaN(selectedCharIndex) || isNaN(awakeningLevel) || isNaN(mrLevel)) return;
-
-            const char = charMasterData[selectedCharIndex];
+            const char = charMasterData.find(c => c.id === selectedCharId);
+            if (!char) return; // キャラが見つからない場合は終了
             
-            // 覚醒データ
             const awakeningData = char.awakening_table.find(item => item.level === awakeningLevel);
 
             // UI情報更新
-            document.getElementById('charNameDisplay').textContent = `${char.name_jp}`;
             document.getElementById('mrLevelDisplay').textContent = mrLevel;
 
+            // 入力値をオブジェクトに収集 (URL更新用)
+            const fixedValues = {};
+            
             // MR補正率のサマリー表示を生成
             let mrSummaryHtml = '';
             STATUS_KEYS.forEach(key => {
                 const mrRate = getMRRate(mrLevel, key);
                 mrSummaryHtml += `${STATUS_LABELS[key]}: +${(mrRate * 100).toFixed(0)}% / `;
             });
-            document.getElementById('mrRateSummary').textContent = mrSummaryHtml.slice(0, -3); // 最後の ' / ' を削除
+            document.getElementById('mrRateSummary').textContent = mrSummaryHtml.slice(0, -3); 
 
             let resultHtml = '';
             
@@ -344,32 +444,76 @@
                 const baseVal = char.base_status_at_max_level[i];
                 const awkAdd = awakeningData.additives[i];
                 const awkMag = awakeningData.magnifiers[i]; // %
-                const fixedAdd = parseInt(document.getElementById(`fixedInput${key}`).value) || 0;
+                const fixedInputElement = document.getElementById(`fixedInput${key}`);
+                const fixedAdd = parseInt(fixedInputElement.value) || 0;
+                fixedValues[key] = fixedAdd; // URL更新用に保存
                 
-                // 2. MR補正率の計算 (MRレベルとステータスごとに変動)
+                // 2. MR補正率の計算
                 const mrRate = getMRRate(mrLevel, key);
 
-                // 3. 基礎ステータスの計算
+                // 3. 基礎ステータスの計算 (編成画面の値)
                 const baseStatus = calculateBaseStatus(baseVal, awkAdd, fixedAdd, mrRate, awkMag);
 
                 // 4. 最終ステータスの計算 (1up, 2up, 3up)
-                let finalStatusCells = `<td class="result-cell text-blue-600 bg-blue-50 border-b border-r">${baseStatus.toLocaleString()}</td>`;
+                let finalStatusCells = `<td class="result-cell text-blue-600 bg-blue-50 border-r">${baseStatus.toLocaleString()}</td>`;
 
+                // AGL行の強調クラスを決定
+                const rowClass = (key === 'AGL') ? "agl-row-highlight" : "border-b border-gray-200";
+                const statLabelClass = (key === 'AGL') ? "agl-text-highlight result-cell font-extrabold border-r" : "result-cell font-bold text-gray-800 border-r";
+                
                 BUFF_FINAL_MULTIPLIERS.forEach(buff => {
-                    const finalStatus = calculateFinalStatus(baseStatus, buff.multiplier);
-                    finalStatusCells += `<td class="result-cell text-red-600 bg-red-50 border-b border-r">${finalStatus.toLocaleString()}</td>`;
+                    let cellContent;
+                    
+                    if (key === 'HP' || key === 'MP') {
+                        // HP/MPはバフで変動しない
+                        if (key === 'MP') {
+                            cellContent = "-"; // MPは '-' 表示
+                        } else {
+                            cellContent = baseStatus.toLocaleString(); // HPは基礎ステータスを表示
+                        }
+                    } else {
+                        // ATK, DEF, AGL, WISはバフ倍率を適用
+                        const finalStatus = calculateFinalStatus(baseStatus, buff.multiplier);
+                        cellContent = finalStatus.toLocaleString();
+                    }
+                    
+                    finalStatusCells += `<td class="result-cell text-red-600 bg-red-50 border-r">${cellContent}</td>`;
                 });
 
                 // 5. 結果をHTMLに追加
                 resultHtml += `
-                    <tr>
-                        <td class="result-cell font-bold text-gray-800 border-b border-r">${STATUS_LABELS[key]}</td>
+                    <tr class="${rowClass}">
+                        <td class="${statLabelClass}">${STATUS_LABELS[key]}</td>
                         ${finalStatusCells}
                     </tr>
                 `;
             });
 
             document.getElementById('statusResultTableBody').innerHTML = resultHtml;
+            
+            // URLパラメータを更新
+            updateUrlParameters(selectedCharId, awakeningLevel, mrLevel, fixedValues);
+        }
+        
+        /**
+         * 現在のURLをクリップボードにコピーする
+         */
+        function shareUrl() {
+            const shareMessage = document.getElementById('shareMessage');
+            
+            // URLは updateAllCalculations で既に最新化されている
+            const urlToCopy = window.location.href;
+            
+            navigator.clipboard.writeText(urlToCopy).then(() => {
+                shareMessage.textContent = 'URLをクリップボードにコピーしました！';
+                shareMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    shareMessage.classList.add('hidden');
+                }, 3000);
+            }, () => {
+                shareMessage.textContent = 'コピーに失敗しました。URLを直接コピーしてください。';
+                shareMessage.classList.remove('hidden');
+            });
         }
 
     </script>
