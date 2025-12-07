@@ -2,7 +2,7 @@
   {
     "id": 797,
     "name_jp": "不死の剣士テリー",
-    "status_keys": ["HP", "MP", "ATK", "DEF", "AGL", "WIS"],
+    "family_jp": "英雄",
     "base_status_at_max_level": [1054, 451, 457, 362, 391, 113],
     "awakening_table": [
       { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
@@ -16,7 +16,7 @@
   {
     "id": 769,
     "name_jp": "プチターク",
-    "status_keys": ["HP", "MP", "ATK", "DEF", "AGL", "WIS"],
+    "family_jp": "悪魔",
     "base_status_at_max_level": [1073, 430, 329, 321, 378, 162],
     "awakening_table": [
       { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
@@ -30,7 +30,7 @@
   {
     "id": 779,
     "name_jp": "まもの使い（女）",
-    "status_keys": ["HP", "MP", "ATK", "DEF", "AGL", "WIS"],
+    "family_jp": "英雄",
     "base_status_at_max_level": [1095, 478, 261, 413, 437, 175],
     "awakening_table": [
       { "level": 0, "additives": [0, 0, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
