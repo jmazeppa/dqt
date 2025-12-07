@@ -187,7 +187,8 @@
         // ----------------------------------------------------
         // 1. 定数定義
         // ----------------------------------------------------
-        const DATA_SOURCE_URL = './status.json'; 
+        // データの読み込み先URL (GitHub PagesのURLに設定済み)
+        const DATA_SOURCE_URL = 'https://jmazeppa.github.io/dqt/status.json'; 
         let charMasterData = [];
 
         const STATUS_KEYS = ["HP", "MP", "ATK", "DEF", "AGL", "WIS"];
@@ -231,9 +232,11 @@
 
         async function loadMasterData() {
             try {
+                // 変更されたDATA_SOURCE_URLからデータを読み込む
                 const response = await fetch(DATA_SOURCE_URL); 
                 if (!response.ok) {
-                    throw new Error(`データの読み込みに失敗しました: ${response.statusText}`);
+                    // CORS問題やURLの入力間違いをユーザーに促すエラーメッセージ
+                    throw new Error(`データファイル (${DATA_SOURCE_URL}) の読み込みに失敗しました。URLが正しいか、GitHub Pagesが有効か確認してください。`);
                 }
                 charMasterData = await response.json();
                 
@@ -250,7 +253,7 @@
 
             } catch (error) {
                 console.error("データの読み込みエラー:", error);
-                document.getElementById('charSelect').innerHTML = `<option value="" disabled selected>エラー: データが読み込めませんでした。</option>`;
+                document.getElementById('charSelect').innerHTML = `<option value="" disabled selected>エラー: ${error.message}</option>`;
             }
         }
 
