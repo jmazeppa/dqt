@@ -188,7 +188,7 @@
             なおこのHTMLコードはGoogleのGeminiによって生成されました。
         </p>
         <div class="version-info mt-3 text-center">
-            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.6 (特性データ覚醒レベル対応)</p>
+            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.9 (additivesマージ対応)</p>
         </div>
     </div>
 
@@ -196,7 +196,7 @@
         // ----------------------------------------------------
         // 1. 定数定義
         // ----------------------------------------------------
-        // データの読み込み先URL (GitHub PagesのURLに設定済み)
+        // データの読み込み先URL (外部JSONファイル)
         const DATA_SOURCE_URL = 'https://jmazeppa.github.io/dqt/status.json'; 
         let charMasterData = [];
 
@@ -254,12 +254,14 @@
             return false;
         }
 
+        /**
+         * 外部JSONファイルからキャラクターマスターデータを読み込む
+         */
         async function loadMasterData() {
             try {
-                // 変更されたDATA_SOURCE_URLからデータを読み込む
-                const response = await fetch(DATA_SOURCE_URL); 
+                const response = await fetch(DATA_SOURCE_URL);
                 if (!response.ok) {
-                    throw new Error(`データファイル (${DATA_SOURCE_URL}) の読み込みに失敗しました。URLが正しいか、GitHub Pagesが有効か確認してください。`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 charMasterData = await response.json();
                 
@@ -281,10 +283,9 @@
                 }
                 
                 updateAllCalculations(); 
-
             } catch (error) {
-                console.error("データの読み込みエラー:", error);
-                document.getElementById('charSelect').innerHTML = `<option value="" disabled selected>エラー: ${error.message}</option>`;
+                console.error("Failed to load master data:", error);
+                document.getElementById('charSelect').innerHTML = '<option disabled selected>データ読み込みエラー</option>';
             }
         }
 
@@ -303,7 +304,12 @@
                     charSelect.value = charIdFromUrl;
                 }
             } else if (charMasterData.length > 0) {
-                charSelect.value = charMasterData[0].id;
+                // デフォルトで「まもの使い(女)」を選択 (ID: 779)
+                if (charSelect.querySelector('option[value="779"]')) {
+                    charSelect.value = "779";
+                } else {
+                    charSelect.value = charMasterData[0].id;
+                }
             }
 
             const awkKey = Object.keys(QUERY_KEYS).find(key => QUERY_KEYS[key] === "awakeningLevel");
@@ -455,7 +461,7 @@
         }
 
         /**
-         * メイン計算処理 (特性ボーナスを覚醒テーブルから読み込むように修正)
+         * メイン計算処理 (additives と magnifiers のみを使用)
          */
         function updateAllCalculations() {
             if (charMasterData.length === 0) return;
@@ -480,24 +486,17 @@
             let resultHtml = '';
             
             STATUS_KEYS.forEach((key, i) => {
-                // 1. 基本値の取得、覚醒固定値、装備固定値、特性ボーナスの計算
+                // 1. 基本値の取得、覚醒固定値、装備固定値の取得
                 const baseVal = char.base_status_at_max_level[i];
-                const awkAdd = awakeningData.additives[i];
+                const awkAdd = awakeningData.additives[i]; // additives (特性加算も含む)
                 const awkMag = awakeningData.magnifiers[i]; // %
                 const fixedInputElement = document.getElementById(`fixedInput${key}`);
                 const fixedAdd = parseInt(fixedInputElement.value) || 0;
                 fixedValues[key] = fixedAdd; 
-                
-                // ★★★ 2. 特性による固定値ボーナスを JSON の awakening_table から読み込む ★★★
-                // characteristic_additives が存在する場合、覚醒加算値に加算する
-                let characteristicAdd = 0;
-                if (awakeningData.characteristic_additives && typeof awakeningData.characteristic_additives[i] === 'number') {
-                    characteristicAdd = awakeningData.characteristic_additives[i];
-                }
 
-                // 3. Additive Base (A) と Base Multiplier (M_Base) の計算
-                // 全ての加算値 (基礎+標準覚醒増分+装備+特性) を合算
-                const totalAdditives = baseVal + awkAdd + fixedAdd + characteristicAdd; 
+                // 2. Additive Base (A) と Base Multiplier (M_Base) の計算
+                // 全ての加算値 (基礎 + additives + 装備) を合算
+                const totalAdditives = baseVal + awkAdd + fixedAdd; 
                 
                 const mrRate = getMRRate(mrLevel, key);
                 const baseMultiplier = 1 + mrRate + (awkMag / 100);
@@ -505,16 +504,11 @@
                 // MR補正率のサマリー表示 (AGL強調)
                 let rateString = `+${(mrRate * 100).toFixed(0)}%`;
                 
-                // 特性ボーナスがあれば追記
-                if (characteristicAdd > 0) {
-                    rateString += ` (+${characteristicAdd}特性)`;
-                }
-
                 const spanClass = (key === 'AGL') ? 'font-extrabold text-red-600' : 'font-bold text-gray-800';
                 mrSummaryHtml += `${STATUS_LABELS[key]}: <span class="${spanClass}">${rateString}</span> / `;
 
 
-                // 4. 基礎ステータス (Buff 0 / 編成画面) の計算
+                // 3. 基礎ステータス (Buff 0 / 編成画面) の計算
                 let baseStatusForTable; // 表の「基礎」列に表示する値
                 let hpPvPValue = 0; // 闘技場補正後のHP値 (HP以外は0)
 
@@ -532,7 +526,7 @@
                 let finalStatusCells = `<td class="result-cell text-blue-600 bg-blue-50 border-r">${baseStatusForTable.toLocaleString()}</td>`;
 
 
-                // 5. 戦闘中ステータス (1up, 2up, 3up) の計算
+                // 4. 戦闘中ステータス (1up, 2up, 3up) の計算
                 const buffMultipliers = BUFF_RATES_BY_STAT[key];
                 
                 for (let j = 0; j < 3; j++) {
@@ -556,7 +550,7 @@
                     finalStatusCells += `<td class="result-cell text-red-600 bg-red-50 border-r">${cellContent}</td>`;
                 }
 
-                // 6. 結果をHTMLに追加
+                // 5. 結果をHTMLに追加
                 const rowClass = (key === 'AGL') ? "agl-row-highlight" : "border-b border-gray-200";
                 const statLabelClass = (key === 'AGL') ? "agl-text-highlight result-cell font-extrabold border-r" : "result-cell font-bold text-gray-800 border-r";
                 
@@ -577,7 +571,7 @@
             // iFrameのURLを更新
             updateUrlParameters(selectedCharId, awakeningLevel, mrLevel, fixedValues);
         }
-        
+
         /**
          * 共有ボタンが押されたとき、URLを表示してコピーを試みる
          */
