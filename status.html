@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DQT ステータス計算</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
         /* Google Site埋め込み・iframe対応の基本スタイル */
         body {
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 1rem 0.25rem 3rem 0.25rem;
+            padding: 0;
             background-color: #f0f2f5;
             color: #333;
             line-height: 1.6;
@@ -30,17 +30,17 @@
             background-clip: text;
         }
         .container {
-            max-width: 800px;
-            margin: auto;
-            padding: 1rem;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            /* 左右のパディングを完全に削除 */
+            padding: 1rem 0; 
+            background-color: transparent; 
+            border-radius: 0; 
+            box-shadow: none; 
         }
         .result-cell {
             font-size: 0.9rem; 
             font-weight: 700;
-            padding: 0.5rem 0.25rem;
+            /* 修正: 垂直パディングを減らし、モバイルでの高さを縮小 */
+            padding: 0.25rem 0.25rem; 
             text-align: center;
             white-space: nowrap; 
         }
@@ -113,30 +113,31 @@
         <div class="input-group bg-green-50">
             <h3 class="text-base font-semibold text-gray-700 mb-3 border-b border-green-200 pb-2">装備・開花による固定値増加 (合計)</h3>
             
-            <div class="mb-4 p-3 bg-red-100 rounded-lg border border-red-300">
-                <label class="block text-base font-semibold text-gray-800 mb-2">
-                    才能開花/スキルパネル (Level 5 差分値):
+            <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <label class="block text-base font-semibold text-gray-700 mb-2">
+                    才能開花/スキルパネル:
                 </label>
-                <div class="flex space-x-6 justify-center">
-                    <label class="flex items-center text-lg font-medium text-gray-700 cursor-pointer">
-                        <input type="radio" name="panelToggle" value="1" id="panelToggleOn" onchange="updateAllCalculations()" class="form-radio h-5 w-5 text-red-600" checked>
-                        <span class="ml-2 font-extrabold text-red-600">ON</span>
+                <div class="flex space-x-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="panelToggle" value="on" id="panelOn" checked onchange="updateAllCalculations()" class="form-radio text-green-600">
+                        <span class="ml-2 text-sm font-medium">ON (基礎値に反映)</span>
                     </label>
-                    <label class="flex items-center text-lg font-medium text-gray-700 cursor-pointer">
-                        <input type="radio" name="panelToggle" value="0" id="panelToggleOff" onchange="updateAllCalculations()" class="form-radio h-5 w-5 text-gray-500">
-                        <span class="ml-2">OFF</span>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="panelToggle" value="off" id="panelOff" onchange="updateAllCalculations()" class="form-radio text-red-600">
+                        <span class="ml-2 text-sm font-medium">OFF</span>
                     </label>
                 </div>
-                <p class="mt-2 text-xs text-gray-600 text-center">※Level 4 → 5 の急増分を個別に反映します。</p>
-                <p id="panelStatusSummary" class="mt-3 text-sm text-red-700 font-bold text-center border-t border-red-300 pt-2"></p>
+                <div id="panelAdditiveSummary" class="mt-3 text-xs text-gray-600 p-2 bg-gray-100 rounded-md">
+                    現在選択中のキャラクターには、特性による固定値増加はありません。
+                </div>
             </div>
 
             <div class="mb-4 flex flex-wrap gap-2 justify-center">
                 <button onclick="setFixedAgl(FASTEST_AGL_VALUE, true)" class="flex-1 min-w-[150px] bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
                     ⚡ 最速装備 (すばやさ+182) 適用
                 </button>
-                <button onclick="resetFixedInputs()" class="flex-1 min-w-[150px] bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
-                    🔄 装備値リセット (全て0へ)
+                <button onclick="resetFixedValues()" class="flex-1 min-w-[150px] bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                    🔄 装備値リセット (全て0)
                 </button>
                 <p class="mt-1 text-xs text-gray-600 text-center w-full">
                     ※最速装備: 獣王爪+102、ベスト+43、星腕輪+37 (34+all3)
@@ -150,8 +151,8 @@
             <p class="mt-2 text-xs text-gray-500">※これらの固定値はMR補正・覚醒倍率の乗算対象となります。</p>
         </div>
 
-        <div class="w-full bg-white p-4 rounded-lg shadow-2xl border-4 border-red-500/50">
-            <h3 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2 flex justify-between items-center">
+        <div class="w-full bg-white py-4 rounded-lg shadow-2xl border-4 border-red-500/50">
+            <h3 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2 flex justify-between items-center px-4">
                 <span>最終ステータス結果 (Lv Max)</span>
                 <span id="summaryDisplay" class="text-sm font-semibold text-gray-600">--</span>
             </h3>
@@ -192,18 +193,18 @@
     </div>
 
     <div class="author-info">
-        <h3 class="mt-4 text-lg font-bold text-gray-700 text-center">作者 ( <a href="https://x.com/jmazeppa" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline">@jmazeppa</a> ) より</h3>
-        <p class="mt-2 text-sm text-gray-500 text-center px-4">
+        <h3 class="mt-4 text-lg font-bold text-gray-700">作者 ( <a href="https://x.com/jmazeppa" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline">@jmazeppa</a> ) より</h3>
+        <p class="mt-2 text-sm text-gray-500">
             このツールは、データ解析に基づく計算ロジックを再現していますが、
             <br>
             <b>計算の正確性やゲーム内データとの完全一致を保証するものではありません。</b> <br>
             本ツールの利用によって生じた損害について、作者は一切責任を負いません。
         </p>
-        <p class="mt-2 text-sm text-gray-500 text-center px-4">
+        <p class="mt-2 text-sm text-gray-500">
             なおこのHTMLコードはGoogleのGeminiによって生成されました。
         </p>
-        <div class="version-info mt-3 text-center">
-            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.12 (パネルONデフォルト、リセットボタン対応)</p>
+        <div class="version-info mt-3">
+            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.7 (モバイルUI改善、パネルON/OFF)</p>
         </div>
     </div>
 
@@ -211,7 +212,7 @@
         // ----------------------------------------------------
         // 1. 定数定義
         // ----------------------------------------------------
-        // データの読み込み先URL (外部JSONファイル)
+        // データの読み込み先URL (GitHub PagesのURLに設定済み)
         const DATA_SOURCE_URL = 'https://jmazeppa.github.io/dqt/status.json'; 
         let charMasterData = [];
 
@@ -226,7 +227,7 @@
             "id": "charId", "awk": "awakeningLevel", "mr": "mrLevel",
             "fxH": "HP", "fxM": "MP", "fxA": "ATK",
             "fxD": "DEF", "fxG": "AGL", "fxW": "WIS",
-            "fxP": "panelToggle" 
+            "pnl": "panelEnabled" // パネルON/OFFのキーを追加
         };
 
         // MRボーナスが適用されるステータスの周期的な順番
@@ -270,14 +271,12 @@
             return false;
         }
 
-        /**
-         * 外部JSONファイルからキャラクターマスターデータを読み込む
-         */
         async function loadMasterData() {
             try {
-                const response = await fetch(DATA_SOURCE_URL);
+                // 変更されたDATA_SOURCE_URLからデータを読み込む
+                const response = await fetch(DATA_SOURCE_URL); 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`データファイル (${DATA_SOURCE_URL}) の読み込みに失敗しました。URLが正しいか、GitHub Pagesが有効か確認してください。`);
                 }
                 charMasterData = await response.json();
                 
@@ -299,9 +298,10 @@
                 }
                 
                 updateAllCalculations(); 
+
             } catch (error) {
-                console.error("Failed to load master data:", error);
-                document.getElementById('charSelect').innerHTML = '<option disabled selected>データ読み込みエラー</option>';
+                console.error("データの読み込みエラー:", error);
+                document.getElementById('charSelect').innerHTML = `<option value="" disabled selected>エラー: ${error.message}</option>`;
             }
         }
 
@@ -320,12 +320,7 @@
                     charSelect.value = charIdFromUrl;
                 }
             } else if (charMasterData.length > 0) {
-                // デフォルトで「まもの使い(女)」を選択 (ID: 779)
-                if (charSelect.querySelector('option[value="779"]')) {
-                    charSelect.value = "779";
-                } else {
-                    charSelect.value = charMasterData[0].id;
-                }
+                charSelect.value = charMasterData[0].id;
             }
 
             const awkKey = Object.keys(QUERY_KEYS).find(key => QUERY_KEYS[key] === "awakeningLevel");
@@ -337,19 +332,21 @@
             document.getElementById('mrLevel').value = mrLevelFromUrl ? Math.max(0, Math.min(100, parseInt(mrLevelFromUrl))) : 70;
             document.getElementById('mrLevelDisplay').textContent = document.getElementById('mrLevel').value;
 
-            // パネルトグルの初期化 (デフォルトをONにする)
-            const panelKey = Object.keys(QUERY_KEYS).find(key => QUERY_KEYS[key] === "panelToggle");
-            const panelToggleFromUrl = urlParams.get(panelKey);
-            // URLに'0'があればOFF、そうでなければON (デフォルトはON)
-            const defaultPanelState = (panelToggleFromUrl === '0') ? '0' : '1';
-            document.getElementById('panelToggleOn').checked = (defaultPanelState === '1');
-            document.getElementById('panelToggleOff').checked = (defaultPanelState === '0');
-
+            // 固定装備値の読み込み
             STATUS_KEYS.forEach(key => {
                 const queryKey = Object.keys(QUERY_KEYS).find(q => QUERY_KEYS[q] === key);
                 const fixedValueFromUrl = urlParams.get(queryKey);
                 document.getElementById(`fixedInput${key}`).value = fixedValueFromUrl ? Math.max(0, parseInt(fixedValueFromUrl)) : 0;
             });
+            
+            // パネルON/OFFの読み込み (デフォルトはON)
+            const panelKey = Object.keys(QUERY_KEYS).find(q => QUERY_KEYS[q] === "panelEnabled");
+            const panelFromUrl = urlParams.get(panelKey);
+            if (panelFromUrl === 'off') {
+                document.getElementById('panelOff').checked = true;
+            } else {
+                document.getElementById('panelOn').checked = true;
+            }
         }
 
 
@@ -429,7 +426,7 @@
                     <div>
                         <label for="fixedInput${key}" class="block text-sm font-medium text-gray-700">${STATUS_LABELS[key]}</label>
                         <input type="number" id="fixedInput${key}" oninput="updateAllCalculations()" min="0" value="0"
-                               class="mt-1 w-full p-2 border border-green-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-lg text-right">
+                               class="mt-1 w-full py-1.5 px-2 border border-green-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-base text-right">
                     </div>
                 `;
             });
@@ -437,19 +434,9 @@
         }
 
         /**
-         * 装備による固定値増加の全ての入力値を0にリセットする (新しいリセットボタン用)
-         */
-        function resetFixedInputs() {
-            STATUS_KEYS.forEach(key => {
-                document.getElementById(`fixedInput${key}`).value = 0;
-            });
-            updateAllCalculations();
-        }
-
-        /**
-         * 固定値入力欄をリセットし、指定されたAGL値のみを設定する（最速装備ボタン用）
+         * 固定値入力欄をリセットし、指定されたAGL値のみを設定する（リセット機能付き）
          * @param {number} aglValue - 設定する素早さの値
-         * @param {boolean} shouldResetAll - 他の固定値をリセットするかどうか (true: 最速装備)
+         * @param {boolean} shouldResetAll - 他の固定値をリセットするかどうか (true: 最速装備, false: 開花)
          */
         function setFixedAgl(aglValue, shouldResetAll) {
             const aglInput = document.getElementById('fixedInputAGL');
@@ -463,9 +450,21 @@
                 });
                 aglInput.value = aglValue; // AGLは上書き
             } else {
-                // (旧)開花ボタンのロジックは削除されました
+                // このロジックは開花ボタン削除に伴い使われませんが、関数定義は維持
+                const currentAgl = parseInt(aglInput.value) || 0;
+                aglInput.value = currentAgl + aglValue;
             }
             
+            updateAllCalculations();
+        }
+        
+        /**
+         * すべての装備値（固定値）を0にリセットする
+         */
+        function resetFixedValues() {
+            STATUS_KEYS.forEach(key => {
+                document.getElementById(`fixedInput${key}`).value = 0;
+            });
             updateAllCalculations();
         }
 
@@ -473,20 +472,12 @@
         /**
          * 現在の入力値を元にURLのGETパラメータを更新する
          */
-        function updateUrlParameters(charId, awkLevel, mrLevel, fixedValues) {
+        function updateUrlParameters(charId, awkLevel, mrLevel, fixedValues, isPanelEnabled) {
             const params = new URLSearchParams();
             
             params.set('id', charId);
             params.set('awk', awkLevel);
             params.set('mr', mrLevel);
-
-            // Panel Toggle State
-            const panelToggleState = document.getElementById('panelToggleOn').checked ? '1' : '0';
-            const panelKey = Object.keys(QUERY_KEYS).find(q => QUERY_KEYS[q] === "panelToggle");
-            // OFFの場合のみURLに設定 (ONはデフォルトとみなし省略)
-            if (panelToggleState === '0') { // MODIFIED: Only set to '0' if OFF
-                params.set(panelKey, panelToggleState);
-            }
 
             STATUS_KEYS.forEach(key => {
                 const queryKey = Object.keys(QUERY_KEYS).find(q => QUERY_KEYS[q] === key);
@@ -494,6 +485,10 @@
                      params.set(queryKey, fixedValues[key]);
                 }
             });
+            
+            if (!isPanelEnabled) {
+                params.set('pnl', 'off');
+            }
 
             // iFrame内部のURLを更新（親ウィンドウのアドレスバーは更新できない）
             const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
@@ -501,7 +496,7 @@
         }
 
         /**
-         * メイン計算処理 (additives と magnifiers のみを使用)
+         * メイン計算処理 (特性ボーナスを覚醒テーブルから読み込むように修正)
          */
         function updateAllCalculations() {
             if (charMasterData.length === 0) return;
@@ -509,11 +504,7 @@
             const selectedCharId = parseInt(document.getElementById('charSelect').value);
             const awakeningLevel = parseInt(document.getElementById('awakeningLevel').value);
             const mrLevel = parseInt(document.getElementById('mrLevel').value);
-            
-            // パネルトグルの状態を取得 (1: ON, 0: OFF)
-            const panelToggleOn = document.getElementById('panelToggleOn').checked;
-            const panelToggleState = panelToggleOn ? 1 : 0;
-
+            const isPanelEnabled = document.getElementById('panelOn').checked;
 
             const char = charMasterData.find(c => c.id === selectedCharId);
             if (!char) return;
@@ -521,63 +512,58 @@
             const awakeningData = char.awakening_table.find(item => item.level === awakeningLevel);
             if (!awakeningData) return;
 
-            // パネル加算値のサマリー表示
-            const panelAdds = char.panel_status_at_max_level || [0, 0, 0, 0, 0, 0];
-            let panelSummaryText = '';
-            
-            STATUS_KEYS.forEach((key, i) => {
-                const add = panelAdds[i];
-                if (add !== 0) {
-                    panelSummaryText += `${STATUS_LABELS[key]}+${add}, `;
-                }
-            });
-
-            const panelSummaryElement = document.getElementById('panelStatusSummary');
-            if (panelSummaryText === '') {
-                panelSummaryElement.textContent = 'このキャラクターには才能開花パネル加算値はありません。';
-                panelSummaryElement.classList.remove('text-red-700');
-            } else {
-                panelSummaryElement.textContent = 
-                    `反映される加算値: ${panelSummaryText.slice(0, -2)}`; // 末尾の", "を削除
-                panelSummaryElement.classList.add('text-red-700');
-            }
-
-            // UI情報更新
-            document.getElementById('mrLevelDisplay').textContent = mrLevel;
-            const summaryText = `${char.name_jp} ${awakeningLevel}凸 / MR${mrLevel}`;
-            document.getElementById('summaryDisplay').textContent = summaryText;
+            // UI情報更新 (1-2: 改行タグを追加し、textContentをinnerHTMLに変更)
+            const summaryHtml = `${char.name_jp} ${awakeningLevel}凸 <br class="sm:hidden"> / MR${mrLevel}`;
+            document.getElementById('summaryDisplay').innerHTML = summaryHtml;
 
             const fixedValues = {};
             let mrSummaryHtml = '';
             let resultHtml = '';
+            let panelValues = [];
             
             STATUS_KEYS.forEach((key, i) => {
-                // 1. 基本値の取得、覚醒固定値、装備固定値の取得
+                // 1. 基本値の取得、覚醒固定値、装備固定値、特性ボーナスの計算
                 const baseVal = char.base_status_at_max_level[i];
-                const awkAdd = awakeningData.additives[i]; // additives (特性加算も含む)
+                const awkAdd = awakeningData.additives[i];
                 const awkMag = awakeningData.magnifiers[i]; // %
                 const fixedInputElement = document.getElementById(`fixedInput${key}`);
                 const fixedAdd = parseInt(fixedInputElement.value) || 0;
                 fixedValues[key] = fixedAdd; 
                 
-                // 才能開花パネル加算値の取得
-                const panelAdd = (char.panel_status_at_max_level && panelToggleState === 1) ? char.panel_status_at_max_level[i] : 0;
+                // ★★★ 2. 特性による固定値ボーナスを JSON の awakening_table から読み込む ★★★
+                let characteristicAdd = 0;
+                if (awakeningData.characteristic_additives && typeof awakeningData.characteristic_additives[i] === 'number') {
+                    characteristicAdd = awakeningData.characteristic_additives[i];
+                }
 
-                // 2. Additive Base (A) と Base Multiplier (M_Base) の計算
-                // 全ての加算値 (基礎 + additives + 装備 + パネル) を合算
-                const totalAdditives = baseVal + awkAdd + fixedAdd + panelAdd; 
+                // パネルがONの場合のみ特性固定値を適用
+                const finalCharacteristicAdd = isPanelEnabled ? characteristicAdd : 0;
+                
+                if (characteristicAdd > 0) {
+                    panelValues.push({key: key, value: characteristicAdd});
+                }
+
+
+                // 3. Additive Base (A) と Base Multiplier (M_Base) の計算
+                // 全ての加算値 (基礎+標準覚醒増分+装備+特性/パネル) を合算
+                const totalAdditives = baseVal + awkAdd + fixedAdd + finalCharacteristicAdd; 
                 
                 const mrRate = getMRRate(mrLevel, key);
                 const baseMultiplier = 1 + mrRate + (awkMag / 100);
                 
-                // MR補正率のサマリー表示 (AGL強調)
+                // MR補正率のサマリー表示
                 let rateString = `+${(mrRate * 100).toFixed(0)}%`;
                 
+                // 特性ボーナスが適用されている場合のみ追記
+                if (finalCharacteristicAdd > 0) {
+                    rateString += ` (+${finalCharacteristicAdd}特性)`;
+                }
+
                 const spanClass = (key === 'AGL') ? 'font-extrabold text-red-600' : 'font-bold text-gray-800';
                 mrSummaryHtml += `${STATUS_LABELS[key]}: <span class="${spanClass}">${rateString}</span> / `;
 
 
-                // 3. 基礎ステータス (Buff 0 / 編成画面) の計算
+                // 4. 基礎ステータス (Buff 0 / 編成画面) の計算
                 let baseStatusForTable; // 表の「基礎」列に表示する値
                 let hpPvPValue = 0; // 闘技場補正後のHP値 (HP以外は0)
 
@@ -595,7 +581,7 @@
                 let finalStatusCells = `<td class="result-cell text-blue-600 bg-blue-50 border-r">${baseStatusForTable.toLocaleString()}</td>`;
 
 
-                // 4. 戦闘中ステータス (1up, 2up, 3up) の計算
+                // 5. 戦闘中ステータス (1up, 2up, 3up) の計算
                 const buffMultipliers = BUFF_RATES_BY_STAT[key];
                 
                 for (let j = 0; j < 3; j++) {
@@ -619,7 +605,7 @@
                     finalStatusCells += `<td class="result-cell text-red-600 bg-red-50 border-r">${cellContent}</td>`;
                 }
 
-                // 5. 結果をHTMLに追加
+                // 6. 結果をHTMLに追加
                 const rowClass = (key === 'AGL') ? "agl-row-highlight" : "border-b border-gray-200";
                 const statLabelClass = (key === 'AGL') ? "agl-text-highlight result-cell font-extrabold border-r" : "result-cell font-bold text-gray-800 border-r";
                 
@@ -633,14 +619,28 @@
                     </tr>
                 `;
             });
+            
+            // パネル内訳の表示更新
+            let panelSummaryHtml = '現在選択中のキャラクターには、特性による固定値増加はありません。';
+            if (panelValues.length > 0) {
+                const summaryParts = panelValues.map(p => `${STATUS_LABELS[p.key]}: +${p.value}`);
+                panelSummaryHtml = '特性/パネルによる固定値増加: ' + summaryParts.join(' / ');
+                if (!isPanelEnabled) {
+                     panelSummaryHtml += ' <span class="text-red-500 font-bold">(OFFのため未適用)</span>';
+                } else {
+                     panelSummaryHtml += ' <span class="text-green-600 font-bold">(適用中)</span>';
+                }
+            }
+            document.getElementById('panelAdditiveSummary').innerHTML = panelSummaryHtml;
+
 
             document.getElementById('mrRateSummary').innerHTML = mrSummaryHtml.slice(0, -3); 
             document.getElementById('statusResultTableBody').innerHTML = resultHtml;
             
             // iFrameのURLを更新
-            updateUrlParameters(selectedCharId, awakeningLevel, mrLevel, fixedValues);
+            updateUrlParameters(selectedCharId, awakeningLevel, mrLevel, fixedValues, isPanelEnabled);
         }
-
+        
         /**
          * 共有ボタンが押されたとき、URLを表示してコピーを試みる
          */
