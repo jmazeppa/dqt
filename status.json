@@ -123,8 +123,8 @@
     "id": 802,
     "name_jp": "大勇者アバン",
     "family_jp": "英雄",
-    "base_status_at_max_level": [1553, 562, 615, 564, 496, 308],
-    "panel_status_at_max_level": [0, 0, 0, 0, 0, 0],
+    "base_status_at_max_level": [1193, 400, 442, 377, 352, 222],
+    "panel_status_at_max_level": [50, 50, 25, 75, 25, 25],
     "awakening_table": [
       { "level": 0, "additives": [0, 0, 15, 0, 20, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
       { "level": 1, "additives": [0, 0, 15, 0, 20, 0], "magnifiers": [5, 5, 5, 5, 5, 5] },
@@ -138,7 +138,7 @@
     "id": 804,
     "name_jp": "真・大魔王バーン",
     "family_jp": "？？？",
-    "base_status_at_max_level": [1512, 651, 622, 536, 527, 506],
+    "base_status_at_max_level": [1180, 506, 498, 429, 422, 405],
     "panel_status_at_max_level": [0, 0, 0, 0, 0, 0],
     "awakening_table": [
       { "level": 0, "additives": [30, 15, 0, 0, 0, 0], "magnifiers": [0, 0, 0, 0, 0, 0] },
