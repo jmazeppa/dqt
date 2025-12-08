@@ -92,13 +92,16 @@
                 </select>
             </div>
             
-            <div>
-                <label for="awakeningLevel" class="block text-base font-semibold text-gray-700 mb-2">
+            <div class="col-span-full md:col-span-1"> <label for="awakeningLevel" class="block text-base font-semibold text-gray-700 mb-2">
                     覚醒段階 (凸数):
                 </label>
                 <select id="awakeningLevel" onchange="updateAllCalculations()" 
                         class="w-full p-3 border border-indigo-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg" disabled>
                     </select>
+            </div>
+            
+            <div id="awakeningAdditivesDisplay" class="col-span-full text-sm text-gray-600 p-2 bg-indigo-100 rounded-md">
+                現在の覚醒段階による固定値増加: --
             </div>
         </div>
 
@@ -123,9 +126,7 @@
         <div class="input-group bg-green-50">
             <h3 class="text-base font-semibold text-gray-700 mb-3 border-b border-green-200 pb-2">装備・開花による固定値増加 (合計)</h3>
             
-            <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                <label class="block text-base font-semibold text-gray-700 mb-2">
-                    才能開花/スキルパネル:
+            <div class="mb-4 p-2 bg-gray-50 border border-gray-200 rounded-lg"> <label class="block text-sm font-semibold text-gray-700 mb-2"> 才能開花/スキルパネル:
                 </label>
                 <div class="flex space-x-4">
                     <label class="inline-flex items-center">
@@ -137,41 +138,39 @@
                         <span class="ml-2 text-sm font-medium">OFF</span>
                     </label>
                 </div>
-                <div id="panelAdditiveSummary" class="mt-3 text-xs text-gray-600 p-2 bg-gray-100 rounded-md">
+                <div id="panelAdditiveSummary" class="mt-1 text-xs text-gray-600 pt-1 rounded-md"> 
                     現在選択中のキャラクターには、特性による固定値増加はありません。
                 </div>
             </div>
 
-            <div class="mb-4 flex flex-wrap gap-2 justify-center">
-                <button onclick="setFixedAgl(FASTEST_AGL_VALUE, true)" class="flex-1 min-w-[150px] bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
-                    ⚡ 最速装備 (すばやさ+182) 適用
+            <div class="mb-4 flex gap-3 justify-center"> <button onclick="setFixedAgl(FASTEST_AGL_VALUE, true)" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-1 text-sm rounded-lg transition duration-150 shadow-md whitespace-nowrap">
+                    ⚡ 最速装備 (+182)
                 </button>
-                <button onclick="resetFixedValues()" class="flex-1 min-w-[150px] bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
-                    🔄 装備値リセット (全て0)
+                <button onclick="resetFixedValues()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-1 text-sm rounded-lg transition duration-150 shadow-md whitespace-nowrap">
+                    🔄 装備値リセット
                 </button>
-                <p class="mt-1 text-xs text-gray-600 text-center w-full">
-                    ※最速装備: 獣王爪+102、ベスト+43、星腕輪+37 (34+all3)
-                </p>
             </div>
+            <p class="mt-1 text-xs text-gray-600 text-center w-full">
+                ※最速装備: 獣王爪+102、ベスト+43、星腕輪+37 (34+all3)
+            </p>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <div id="fixedInputContainer" class="col-span-full grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-3 gap-3">
+                <div id="fixedInputContainer" class="col-span-full grid grid-cols-3 gap-3">
                     </div>
             </div>
             <p class="mt-2 text-xs text-gray-500">※これらの固定値はMR補正・覚醒倍率の乗算対象となります。</p>
         </div>
 
         <div class="w-full bg-white py-4 rounded-lg shadow-2xl border-4 border-red-500/50">
-            <h3 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2 flex justify-between items-center px-4">
-                <span>最終ステータス結果 (Lv Max)</span>
-                <span id="summaryDisplay" class="text-sm font-semibold text-gray-600">--</span>
+            <h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2 flex justify-between items-center px-4"> <span>最終ステータス結果 (Lv Max)</span>
+                <span id="summaryDisplay" class="text-xs font-semibold text-gray-600">--</span> 
             </h3>
             
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white border border-gray-200">
                     <thead>
                         <tr class="bg-gray-100">
-                            <th class="py-2 px-1 border-b text-xs font-semibold text-gray-600">ステ (<span class="text-xs">バフ率</span>)</th>
+                            <th class="py-2 px-1 border-b text-xs font-semibold text-gray-600">ステ (<span class="text-[0.65rem]">バフ率</span>)</th>
                             <th class="py-2 px-1 border-b text-xs font-semibold text-blue-600">基礎</th>
                             <th class="py-2 px-1 border-b text-xs font-semibold text-red-600">1up</th>
                             <th class="py-2 px-1 border-b text-xs font-semibold text-red-600">2up</th>
@@ -214,7 +213,7 @@
             なおこのHTMLコードはGoogleのGeminiによって生成されました。
         </p>
         <div class="version-info mt-3">
-            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.7 (モバイルUI改善、パネルON/OFF)</p>
+            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.8 (パネル値修正、UI最適化)</p>
         </div>
     </div>
 
@@ -522,7 +521,21 @@
             const awakeningData = char.awakening_table.find(item => item.level === awakeningLevel);
             if (!awakeningData) return;
 
-            // UI情報更新 (1-2: 改行タグを追加し、textContentをinnerHTMLに変更)
+            // 1. 覚醒加算値の表示
+            const awkAdditives = awakeningData.additives;
+            let additiveDisplayHtml = '現在の覚醒段階による固定値増加: ';
+            const additiveParts = STATUS_KEYS.map((key, i) => {
+                return awkAdditives[i] > 0 ? `${STATUS_LABELS[key]}+${awkAdditives[i]}` : '';
+            }).filter(s => s !== '');
+
+            if (additiveParts.length > 0) {
+                additiveDisplayHtml += additiveParts.join(' / ');
+            } else {
+                additiveDisplayHtml += 'なし';
+            }
+            document.getElementById('awakeningAdditivesDisplay').innerHTML = additiveDisplayHtml;
+            
+            // UI情報更新 (4-1, 4-2: 改行タグを維持し、innerHTMLを使用)
             const summaryHtml = `${char.name_jp} ${awakeningLevel}凸 <br class="sm:hidden"> / MR${mrLevel}`;
             document.getElementById('summaryDisplay').innerHTML = summaryHtml;
 
@@ -531,6 +544,21 @@
             let resultHtml = '';
             let panelValues = [];
             
+            // 2. 特性による固定値ボーナスを計算 (修正: panel_status_at_max_level も考慮)
+            let characteristicAdds = [];
+            
+            // 1. awakening_table の characteristic_additives を優先 (新しいJSON形式)
+            if (awakeningData.characteristic_additives && awakeningData.characteristic_additives.length === 6) {
+                characteristicAdds = awakeningData.characteristic_additives;
+            } 
+            // 2. キャラクター直下の panel_status_at_max_level を使用 (古いJSON形式)
+            else if (char.panel_status_at_max_level && char.panel_status_at_max_level.length === 6) {
+                characteristicAdds = char.panel_status_at_max_level;
+            } else {
+                characteristicAdds = [0, 0, 0, 0, 0, 0];
+            }
+
+
             STATUS_KEYS.forEach((key, i) => {
                 // 1. 基本値の取得、覚醒固定値、装備固定値、特性ボーナスの計算
                 const baseVal = char.base_status_at_max_level[i];
@@ -540,16 +568,12 @@
                 const fixedAdd = parseInt(fixedInputElement.value) || 0;
                 fixedValues[key] = fixedAdd; 
                 
-                // ★★★ 2. 特性による固定値ボーナスを JSON の awakening_table から読み込む ★★★
-                let characteristicAdd = 0;
-                if (awakeningData.characteristic_additives && typeof awakeningData.characteristic_additives[i] === 'number') {
-                    characteristicAdd = awakeningData.characteristic_additives[i];
-                }
+                const characteristicAdd = characteristicAdds[i];
 
                 // パネルがONの場合のみ特性固定値を適用
                 const finalCharacteristicAdd = isPanelEnabled ? characteristicAdd : 0;
                 
-                if (characteristicAdd > 0) {
+                if (characteristicAdd > 0) { // 常にオリジナルデータに基づいて内訳を表示
                     panelValues.push({key: key, value: characteristicAdd});
                 }
 
@@ -588,7 +612,8 @@
                     baseStatusForTable = Math.floor(totalAdditives * baseMultiplier);
                 }
                 
-                let finalStatusCells = `<td class="result-cell text-blue-600 bg-blue-50 border-r">${baseStatusForTable.toLocaleString()}</td>`;
+                // 4-3. toLocaleString() を削除
+                let finalStatusCells = `<td class="result-cell text-blue-600 bg-blue-50 border-r">${baseStatusForTable}</td>`;
 
 
                 // 5. 戦闘中ステータス (1up, 2up, 3up) の計算
@@ -602,14 +627,14 @@
                         cellContent = "-"; // MPは '-' 表示
                     } else if (key === 'HP') {
                         // HPは1up, 2up, 3upで闘技場補正後の値を使用
-                        cellContent = hpPvPValue.toLocaleString();
+                        cellContent = hpPvPValue; // 4-3. toLocaleString() を削除
                     } else {
                         // ATK, DEF, AGL, WIS: Buff RateをBase Multiplierに追加し、一度だけ切り捨て
                         const buffRatePercentage = fullBuffMultiplier - 1; 
                         const finalMultiplier = baseMultiplier + buffRatePercentage; 
                         
                         const finalStatus = Math.floor(totalAdditives * finalMultiplier);
-                        cellContent = finalStatus.toLocaleString();
+                        cellContent = finalStatus; // 4-3. toLocaleString() を削除
                     }
                     
                     finalStatusCells += `<td class="result-cell text-red-600 bg-red-50 border-r">${cellContent}</td>`;
