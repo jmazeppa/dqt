@@ -153,14 +153,14 @@
             </div>
 
             <div class="mb-4 flex gap-3 justify-center">
-                <button onclick="setFixedAgl(FASTEST_AGL_VALUE, true)" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-1 text-sm rounded-lg transition duration-150 shadow-md whitespace-nowrap">
+                <button id="fastestAglButton" onclick="setFixedAgl(182, true)" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-1 text-sm rounded-lg transition duration-150 shadow-md whitespace-nowrap">
                     ⚡ 最速装備 (+182)
                 </button>
                 <button onclick="resetFixedValues()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-1 text-sm rounded-lg transition duration-150 shadow-md whitespace-nowrap">
                     🔄 装備値リセット
                 </button>
             </div>
-            <p class="mt-1 text-xs text-gray-600 text-center w-full">
+            <p id="fastestAglNote" class="mt-1 text-xs text-gray-600 text-center w-full">
                 ※最速装備: 獣王爪+102、ベスト+43、星腕輪+37 (34+all3)
             </p>
 
@@ -231,7 +231,7 @@
             なおこのHTMLコードはGoogleのGeminiによって生成されました。
         </p>
         <div class="version-info mt-3">
-            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.9 (計算式表示機能、UI最適化)</p>
+            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.10 (最速装備ロジック修正)</p>
         </div>
     </div>
 
@@ -239,7 +239,6 @@
         // ----------------------------------------------------
         // 1. 定数定義
         // ----------------------------------------------------
-        // データの読み込み先URL (GitHub PagesのURLに設定済み)
         const DATA_SOURCE_URL = 'https://jmazeppa.github.io/dqt/status.json'; 
         let charMasterData = [];
 
@@ -249,48 +248,66 @@
             "DEF": "守備", "AGL": "素早", "WIS": "賢さ"
         };
         
-        // GETパラメータのキーとステータスの対応
         const QUERY_KEYS = {
             "id": "charId", "awk": "awakeningLevel", "mr": "mrLevel",
             "fxH": "HP", "fxM": "MP", "fxA": "ATK",
             "fxD": "DEF", "fxG": "AGL", "fxW": "WIS",
-            "pnl": "panelEnabled" // パネルON/OFFのキーを追加
+            "pnl": "panelEnabled" 
         };
 
-        // MRボーナスが適用されるステータスの周期的な順番
         const MR_BONUS_ORDER = ["HP", "DEF", "AGL", "ATK", "WIS", "MP"];
         
-        // ステータスごとのバフ倍率 [1up, 2up, 3up] (1.00 = 0% バフ)
         const BUFF_RATES_BY_STAT = {
-            "HP": [1.30, 1.30, 1.30], // 闘技場補正1.30倍
+            "HP": [1.30, 1.30, 1.30], 
             "MP": [1.00, 1.00, 1.00], 
-            "ATK": [1.15, 1.30, 1.45], // 15%, 30%, 45%
-            "DEF": [1.25, 1.50, 1.75], // 25%, 50%, 75%
-            "AGL": [1.20, 1.40, 1.60], // 20%, 40%, 60%
-            "WIS": [1.15, 1.30, 1.45]  // 15%, 30%, 45%
+            "ATK": [1.15, 1.30, 1.45], 
+            "DEF": [1.25, 1.50, 1.75], 
+            "AGL": [1.20, 1.40, 1.60], 
+            "WIS": [1.15, 1.30, 1.45] 
         };
         
-        // ステータスごとのバフ率表示用
         const BUFF_DISPLAY_RATE = {
             "HP": "闘技+30%", "MP": "不変", "ATK": "15%", 
             "DEF": "25%", "AGL": "20%", "WIS": "15%"
         };
-
-        // 最速装備の固定値
-        const FASTEST_AGL_VALUE = 182; 
         
+        // 1. 最速装備の動的設定
+        const FASTEST_AGL_CONFIG = {
+            // type_number: 1 (その他/未定義)
+            'default': {
+                value: 182, 
+                breakdown: "獣王爪+102、ベスト+43、星腕輪+37 (34+all3)",
+                label: "その他"
+            },
+            // type_number: 2 (ぼうぎょ/Defense Type)
+            2: {
+                value: 154, // 102 + 15 + 37
+                breakdown: "獣王爪+102、カブト+15、星腕輪+37 (34+all3)",
+                label: "ぼうぎょ"
+            },
+            // type_number: 3 (まほう/Magic Type)
+            3: {
+                value: 170, // 102 + 31 + 37
+                breakdown: "獣王爪+102、ローブ+31、星腕輪+37 (34+all3)",
+                label: "まほう"
+            }
+        };
+
+        /**
+         * キャラクタータイプに基づき、最速装備の構成を取得する
+         */
+        function getFastestAglConfig(typeNumber) {
+            return FASTEST_AGL_CONFIG[typeNumber] || FASTEST_AGL_CONFIG['default'];
+        }
+
         // ----------------------------------------------------
         // 2. データ取得と初期化
         // ----------------------------------------------------
         
-        /**
-         * Google Sitesの「HTMLを埋め込む」機能による制限付きサンドボックス内にいるかを判定する。
-         */
         function isGoogleSitesEmbed() {
             if (window.self === window.top) {
                 return false; 
             }
-            
             const iframeUrl = window.location.href;
             if (iframeUrl.includes('sites.google.com') || iframeUrl.includes('googleusercontent.com')) {
                 return true;
@@ -300,10 +317,9 @@
 
         async function loadMasterData() {
             try {
-                // 変更されたDATA_SOURCE_URLからデータを読み込む
                 const response = await fetch(DATA_SOURCE_URL); 
                 if (!response.ok) {
-                    throw new Error(`データファイル (${DATA_SOURCE_URL}) の読み込みに失敗しました。URLが正しいか、GitHub Pagesが有効か確認してください。`);
+                    throw new Error(`データファイル (${DATA_SOURCE_URL}) の読み込みに失敗しました。`);
                 }
                 charMasterData = await response.json();
                 
@@ -316,7 +332,6 @@
                 document.getElementById('charSelect').disabled = false;
                 document.getElementById('awakeningLevel').disabled = false;
 
-                // Google Sites埋め込み制限の処理
                 if (isGoogleSitesEmbed()) {
                     const shareGroup = document.getElementById('shareInputGroup');
                     if (shareGroup) {
@@ -324,7 +339,6 @@
                     }
                 }
                 
-                // 2. 計算式表示のイベントリスナー設定 (一度だけ実行)
                 setupCalculationDisplayListeners();
 
                 updateAllCalculations(); 
@@ -335,9 +349,6 @@
             }
         }
 
-        /**
-         * GETパラメータから初期値を読み込み、フォームに反映する
-         */
         function initializeFromQueryParameters() {
             const urlParams = new URLSearchParams(window.location.search);
             
@@ -362,14 +373,12 @@
             document.getElementById('mrLevel').value = mrLevelFromUrl ? Math.max(0, Math.min(100, parseInt(mrLevelFromUrl))) : 70;
             document.getElementById('mrLevelDisplay').textContent = document.getElementById('mrLevel').value;
 
-            // 固定装備値の読み込み
             STATUS_KEYS.forEach(key => {
                 const queryKey = Object.keys(QUERY_KEYS).find(q => QUERY_KEYS[q] === key);
                 const fixedValueFromUrl = urlParams.get(queryKey);
                 document.getElementById(`fixedInput${key}`).value = fixedValueFromUrl ? Math.max(0, parseInt(fixedValueFromUrl)) : 0;
             });
             
-            // パネルON/OFFの読み込み (デフォルトはON)
             const panelKey = Object.keys(QUERY_KEYS).find(q => QUERY_KEYS[q] === "panelEnabled");
             const panelFromUrl = urlParams.get(panelKey);
             if (panelFromUrl === 'off') {
@@ -384,9 +393,6 @@
         // 3. MR/計算ロジック
         // ----------------------------------------------------
 
-        /**
-         * MRレベルを調整し、計算を更新する
-         */
         function adjustMrLevel(adjustment) {
             const input = document.getElementById('mrLevel');
             let currentValue = parseInt(input.value);
@@ -400,9 +406,6 @@
             updateAllCalculations();
         }
 
-        /**
-         * MRレベルに基づき、指定ステータスのMR補正率を計算する
-         */
         function getMRRate(mrLevel, statKey) {
             if (mrLevel === 0) return 0;
             
@@ -463,22 +466,16 @@
             container.innerHTML = html;
         }
 
-        /**
-         * 固定値入力欄をリセットし、指定されたAGL値のみを設定する（リセット機能付き）
-         * @param {number} aglValue - 設定する素早さの値
-         * @param {boolean} shouldResetAll - 他の固定値をリセットするかどうか (true: 最速装備, false: 開花)
-         */
         function setFixedAgl(aglValue, shouldResetAll) {
             const aglInput = document.getElementById('fixedInputAGL');
             
             if (shouldResetAll) {
-                // 最速装備ボタンの場合: AGL以外の全ての固定値をリセット
                 STATUS_KEYS.forEach(key => {
                     if (key !== 'AGL') {
                         document.getElementById(`fixedInput${key}`).value = 0;
                     }
                 });
-                aglInput.value = aglValue; // AGLは上書き
+                aglInput.value = aglValue; 
             } else {
                 const currentAgl = parseInt(aglInput.value) || 0;
                 aglInput.value = currentAgl + aglValue;
@@ -487,9 +484,6 @@
             updateAllCalculations();
         }
         
-        /**
-         * すべての装備値（固定値）を0にリセットする
-         */
         function resetFixedValues() {
             STATUS_KEYS.forEach(key => {
                 document.getElementById(`fixedInput${key}`).value = 0;
@@ -497,10 +491,6 @@
             updateAllCalculations();
         }
 
-        
-        /**
-         * 現在の入力値を元にURLのGETパラメータを更新する
-         */
         function updateUrlParameters(charId, awkLevel, mrLevel, fixedValues, isPanelEnabled) {
             const params = new URLSearchParams();
             
@@ -519,7 +509,6 @@
                 params.set('pnl', 'off');
             }
 
-            // iFrame内部のURLを更新（親ウィンドウのアドレスバーは更新できない）
             const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
             history.replaceState(null, '', newUrl);
         }
@@ -541,7 +530,24 @@
             const awakeningData = char.awakening_table.find(item => item.level === awakeningLevel);
             if (!awakeningData) return;
             
-            // 2. 計算式表示エリアをクリア
+            // 2. 最速装備の動的更新
+            const typeNumber = char.type_number;
+            const aglConfig = getFastestAglConfig(typeNumber);
+            const fastestAglValue = aglConfig.value;
+            const fastestAglBreakdown = aglConfig.breakdown;
+            const fastestAglLabel = aglConfig.label;
+            
+            // 最速装備ボタンと注釈を更新
+            const fastestButton = document.getElementById('fastestAglButton');
+            const fastestNote = document.getElementById('fastestAglNote');
+            
+            fastestButton.innerHTML = `⚡ 最速装備 (+${fastestAglValue})`;
+            fastestButton.setAttribute('onclick', `setFixedAgl(${fastestAglValue}, true)`);
+            
+            const typeNote = typeNumber ? ` (タイプ: ${fastestAglLabel})` : '';
+            fastestNote.innerHTML = `※最速装備${typeNote}: ${fastestAglBreakdown}`;
+            
+            // 計算式表示エリアをクリア
             document.getElementById('calculationDisplay').innerHTML = 'セルにカーソルを合わせるか、タップしてください。';
             document.getElementById('calculationDisplayContainer').classList.add('hidden');
 
@@ -572,11 +578,9 @@
             // 2. 特性による固定値ボーナスを計算
             let characteristicAdds = [];
             
-            // 1. awakening_table の characteristic_additives を優先 (新しいJSON形式)
             if (awakeningData.characteristic_additives && awakeningData.characteristic_additives.length === 6) {
                 characteristicAdds = awakeningData.characteristic_additives;
             } 
-            // 2. キャラクター直下の panel_status_at_max_level を使用 (古いJSON形式)
             else if (char.panel_status_at_max_level && char.panel_status_at_max_level.length === 6) {
                 characteristicAdds = char.panel_status_at_max_level;
             } else {
@@ -585,82 +589,64 @@
 
 
             STATUS_KEYS.forEach((key, i) => {
-                // 1. 基本値の取得、覚醒固定値、装備固定値、特性ボーナスの計算
                 const baseVal = char.base_status_at_max_level[i];
                 const awkAdd = awakeningData.additives[i];
-                const awkMag = awakeningData.magnifiers[i]; // %
+                const awkMag = awakeningData.magnifiers[i]; 
                 const fixedInputElement = document.getElementById(`fixedInput${key}`);
                 const fixedAdd = parseInt(fixedInputElement.value) || 0;
                 fixedValues[key] = fixedAdd; 
                 
                 const characteristicAdd = characteristicAdds[i];
 
-                // パネルがONの場合のみ特性固定値を適用
                 const finalCharacteristicAdd = isPanelEnabled ? characteristicAdd : 0;
                 
-                if (characteristicAdd > 0) { // 常にオリジナルデータに基づいて内訳を表示
+                if (characteristicAdd > 0) { 
                     panelValues.push({key: key, value: characteristicAdd});
                 }
 
-
-                // 3. Additive Base (A) と Base Multiplier (M_Base) の計算
-                // 全ての加算値 (基礎+標準覚醒増分+装備+特性/パネル) を合算
                 const totalAdditives = baseVal + awkAdd + fixedAdd + finalCharacteristicAdd; 
                 
                 const mrRate = getMRRate(mrLevel, key);
                 const awkMagPercent = awkMag / 100;
                 const baseMultiplier = 1 + mrRate + awkMagPercent;
                 
-                // MR補正率のサマリー表示 (1. 特性固定値の表示を削除)
-                let rateString = `+${(mrRate * 100).toFixed(0)}% (${(awkMag * 100).toFixed(0)}% 覚醒)`;
-                
+                // MR補正率のサマリー表示 (特性固定値の表示を削除済み)
                 const spanClass = (key === 'AGL') ? 'font-extrabold text-red-600' : 'font-bold text-gray-800';
                 mrSummaryHtml += `${STATUS_LABELS[key]}: <span class="${spanClass}">+${(mrRate * 100).toFixed(0)}%</span> / `;
 
+                let baseStatusForTable; 
+                let hpPvPValue = 0; 
 
-                // 4. 基礎ステータス (Buff 0 / 編成画面) の計算
-                let baseStatusForTable; // 表の「基礎」列に表示する値
-                let hpPvPValue = 0; // 闘技場補正後のHP値 (HP以外は0)
-
-                // HPの基礎値は、闘技場補正なしで計算
                 if (key === 'HP') {
-                    // HP 基礎: 補正なしで計算 (編成画面値)
                     baseStatusForTable = Math.floor(totalAdditives * baseMultiplier);
-                    // HP 闘技場値: 1.30倍補正を適用して計算
                     hpPvPValue = Math.floor(totalAdditives * baseMultiplier * 1.30);
                 } else {
-                    // ATK/DEF/AGL/WIS/MPは Buff 0 の状態で切り捨て
                     baseStatusForTable = Math.floor(totalAdditives * baseMultiplier);
                 }
                 
-                // 2. 計算式表示用データ属性 (Buff 0)
                 const dataAttributesBase = `data-stat="${key}" data-buff="0" data-totaladd="${totalAdditives}" data-basemult="${baseMultiplier}" data-baseval="${baseVal}" data-awkadd="${awkAdd}" data-fixedadd="${fixedAdd}" data-paneladd="${finalCharacteristicAdd}" data-mrrate="${mrRate}" data-awkperc="${awkMagPercent}"`;
 
-                // 4-3. カンマを削除
                 let finalStatusCells = `<td class="result-cell text-blue-600 bg-blue-50 border-r" tabindex="0" ${dataAttributesBase}>${baseStatusForTable}</td>`;
 
 
-                // 5. 戦闘中ステータス (1up, 2up, 3up) の計算
                 const buffMultipliers = BUFF_RATES_BY_STAT[key];
                 
                 for (let j = 0; j < 3; j++) {
                     let cellContent;
                     const fullBuffMultiplier = buffMultipliers[j]; 
-                    const buffLevel = j + 1; // 1, 2, 3
+                    const buffLevel = j + 1; 
                     
                     let buffRatePercentage = 0;
                     let finalStatus = 0;
 
                     if (key === 'MP') {
-                        cellContent = "-"; // MPは '-' 表示
-                        finalStatus = 0; // データ属性用に0を設定
+                        cellContent = "-"; 
+                        finalStatus = 0; 
                     } else if (key === 'HP') {
-                        // HPは1up, 2up, 3upで闘技場補正後の値を使用
                         cellContent = hpPvPValue; 
                         finalStatus = hpPvPValue;
                         buffRatePercentage = BUFF_RATES_BY_STAT["HP"][0] - 1;
                     } else {
-                        // ATK, DEF, AGL, WIS: Buff RateをBase Multiplierに追加し、一度だけ切り捨て
                         buffRatePercentage = fullBuffMultiplier - 1; 
                         const finalMultiplier = baseMultiplier + buffRatePercentage; 
                         
@@ -668,13 +654,11 @@
                         cellContent = finalStatus; 
                     }
                     
-                    // 2. 計算式表示用データ属性 (Buff 1, 2, 3)
                     const dataAttributesBuff = `data-stat="${key}" data-buff="${buffLevel}" data-totaladd="${totalAdditives}" data-basemult="${baseMultiplier}" data-baseval="${baseVal}" data-awkadd="${awkAdd}" data-fixedadd="${fixedAdd}" data-paneladd="${finalCharacteristicAdd}" data-mrrate="${mrRate}" data-awkperc="${awkMagPercent}" data-buffperc="${buffRatePercentage}"`;
                     
                     finalStatusCells += `<td class="result-cell text-red-600 bg-red-50 border-r" tabindex="0" ${dataAttributesBuff}>${cellContent}</td>`;
                 }
 
-                // 6. 結果をHTMLに追加
                 const rowClass = (key === 'AGL') ? "agl-row-highlight" : "border-b border-gray-200";
                 const statLabelClass = (key === 'AGL') ? "agl-text-highlight result-cell font-extrabold border-r" : "result-cell font-bold text-gray-800 border-r";
                 
@@ -706,7 +690,6 @@
             document.getElementById('mrRateSummary').innerHTML = mrSummaryHtml.slice(0, -3); 
             document.getElementById('statusResultTableBody').innerHTML = resultHtml;
             
-            // iFrameのURLを更新
             updateUrlParameters(selectedCharId, awakeningLevel, mrLevel, fixedValues, isPanelEnabled);
         }
         
@@ -714,60 +697,42 @@
         // 5. 計算式表示機能
         // ----------------------------------------------------
         
-        /**
-         * 結果セルにマウスホバー/フォーカスイベントリスナーを設定する
-         * (一度だけ実行される)
-         */
         function setupCalculationDisplayListeners() {
             const tableBody = document.getElementById('statusResultTableBody');
             
-            // リスナーが既に取り付けられている場合はスキップ
             if (tableBody && tableBody.getAttribute('data-listeners-attached')) {
                 return;
             }
 
-            // 非表示にする処理
             const hideCalculation = () => {
                 document.getElementById('calculationDisplayContainer').classList.add('hidden');
             };
             
-            // 表示する処理
             const handleCellEvent = (event) => {
                 const cell = event.target.closest('.result-cell');
-                // .result-cellの子孫でないか、データ属性がない場合は非表示
                 if (!cell || !cell.dataset.stat) {
-                    // leaveイベントなどで非表示が実行されるため、ここでは何もしない
                     return; 
                 }
                 
-                // 計算式を生成して表示
                 const formula = generateFormula(cell.dataset);
                 document.getElementById('calculationDisplay').innerHTML = formula;
                 document.getElementById('calculationDisplayContainer').classList.remove('hidden');
             };
 
-            // イベントデリゲーション
             if (tableBody) {
-                // ホバー/フォーカス時
                 tableBody.addEventListener('mouseenter', handleCellEvent, true);
                 tableBody.addEventListener('focusin', handleCellEvent, true);
-                // ホバー解除/フォーカスアウト時
                 tableBody.addEventListener('mouseleave', hideCalculation, true);
                 tableBody.addEventListener('focusout', hideCalculation, true);
                 
-                // リスナー取り付け済みマーク
                 tableBody.setAttribute('data-listeners-attached', 'true');
             }
         }
         
-        /**
-         * セルのデータ属性から計算式文字列を生成する
-         */
         function generateFormula(data) {
             const { stat, buff, totaladd, basemult, baseval, awkadd, fixedadd, paneladd, mrrate, awkperc, buffperc } = data;
 
             const statLabel = STATUS_LABELS[stat] || stat;
-            // 数値はすべてIntまたはFloatとしてパース
             const baseValInt = parseInt(baseval);
             const awkAddInt = parseInt(awkadd);
             const fixedAddInt = parseInt(fixedadd);
@@ -776,7 +741,7 @@
             const mrRateFloat = parseFloat(mrrate);
             const awkPercFloat = parseFloat(awkperc);
             const baseMultFloat = parseFloat(basemult);
-            const buffPercFloat = parseFloat(buffperc) || 0; // MPやBaseの場合は0
+            const buffPercFloat = parseFloat(buffperc) || 0; 
 
             // [1] Additives (加算部)
             const additiveFormula = `(${baseValInt} [基礎] + ${awkAddInt} [覚醒] + ${fixedAddInt} [装備] + ${panelAddInt} [パネル])`;
@@ -793,7 +758,6 @@
             let finalFormula = `<p class="text-sm font-semibold mb-1">${statLabel} (${statusType})</p>`;
             let calculationStep;
             
-            // Buffed Status (1up, 2up, 3up)
             if (buff !== "0") {
                 const buffLevel = parseInt(buff);
                 statusType = `戦闘中 (${buffLevel}up)`;
@@ -803,8 +767,7 @@
                 }
 
                 if (stat === 'HP') {
-                    // HP Buffed Columns (1up, 2up, 3up) calculation logic: 1.30x PvE multiplier
-                    const hpPvPRate = BUFF_RATES_BY_STAT["HP"][0]; // 1.30
+                    const hpPvPRate = BUFF_RATES_BY_STAT["HP"][0]; 
                     finalMultiplier = baseMultFloat * hpPvPRate;
                     finalStatus = Math.floor(totalAddInt * finalMultiplier);
                     
@@ -817,7 +780,6 @@
                     calculationStep += `<div class="mt-1">= ${totalAddStr} x ${baseMultFloat.toFixed(4)} x ${hpPvPRate.toFixed(2)} ≈ <span class="text-green-400 font-bold">${finalStatus}</span> (切り捨て)</div>`;
 
                 } else {
-                    // ATK, DEF, AGL, WIS
                     const buffRatePercent = (buffPercFloat * 100).toFixed(0);
                     
                     finalMultiplier = baseMultFloat + buffPercFloat;
@@ -830,13 +792,8 @@
                     calculationStep += `<div class="mt-1">= ${totalAddStr} x ${finalMultiplier.toFixed(4)} ≈ <span class="text-green-400 font-bold">${finalStatus}</span> (切り捨て)</div>`;
                 }
             } else {
-                // Base Status (Buff 0)
                 finalStatus = Math.floor(totalAddInt * baseMultFloat);
                 
-                if (stat === 'HP') {
-                    // HP Base Status calculation is without the 1.30x PvP rate.
-                }
-
                 calculationStep = `<div><span class="font-bold">倍率部 (M):</span> ${baseMultiplierFormula} = <span class="text-yellow-400 font-bold">${finalMultiplier.toFixed(4)}</span></div>`;
                 calculationStep += `<div class="mt-2"><span class="font-bold">計算:</span> ${additiveFormula} x ${finalMultiplier.toFixed(4)}`;
                 calculationStep += `<div class="mt-1">= ${totalAddStr} x ${finalMultiplier.toFixed(4)} ≈ <span class="text-green-400 font-bold">${finalStatus}</span> (切り捨て)</div>`;
@@ -844,16 +801,13 @@
 
             finalFormula += `<div class="mt-2 space-y-1">`;
             finalFormula += `<div><span class="font-bold">加算部 (A):</span> ${additiveFormula} = <span class="text-yellow-400 font-bold">${totalAddStr}</span></div>`;
-            finalFormula += calculationStep; // 上記で生成した計算ステップを挿入
+            finalFormula += calculationStep; 
             finalFormula += `</div>`;
             
             return finalFormula;
         }
 
 
-        /**
-         * 共有ボタンが押されたとき、URLを表示してコピーを試みる
-         */
         function displayAndCopyUrl() {
             const shareArea = document.getElementById('urlShareArea');
             const shareInput = document.getElementById('shareUrlInput');
@@ -866,9 +820,6 @@
             copyToClipboard('shareUrlInput');
         }
 
-        /**
-         * 指定されたIDの要素のテキストをクリップボードにコピーする
-         */
         function copyToClipboard(elementId) {
             const inputElement = document.getElementById(elementId);
             const copyMessage = document.getElementById('shareCopyMessage');
@@ -876,7 +827,7 @@
             if (!inputElement) return;
 
             inputElement.select();
-            inputElement.setSelectionRange(0, 99999); // モバイル対応
+            inputElement.setSelectionRange(0, 99999); 
             
             navigator.clipboard.writeText(inputElement.value).then(() => {
                 copyMessage.textContent = 'クリップボードにコピーしました！';
