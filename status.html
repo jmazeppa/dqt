@@ -30,10 +30,8 @@
             background-clip: text;
         }
         .container {
-            /* センタリングと最大幅を適用 */
             max-width: 800px;
             margin: auto; 
-            /* 左右のパディングを戻す */
             padding: 1rem; 
             background-color: #ffffff; 
             border-radius: 12px; 
@@ -45,11 +43,10 @@
             padding: 0.25rem 0.25rem; 
             text-align: center;
             white-space: nowrap; 
-            cursor: pointer; /* ホバー/タップで計算式を表示するため */
+            cursor: pointer;
         }
-        /* ホバー時の視覚的なフィードバック */
         .result-cell:hover, .result-cell:focus {
-            background-color: #bae6fd !important; /* light-blue-200 */
+            background-color: #bae6fd !important;
             outline: 2px solid #3b82f6;
             outline-offset: -2px;
         }
@@ -71,12 +68,11 @@
             font-weight: 900;
             color: #dc2626; 
         }
-        /* 作者情報セクションのセンタリングと余白設定 */
         .author-info {
             max-width: 800px;
-            margin: 1rem auto 3rem auto; /* 上下のmarginと中央揃え */
-            padding: 0 1rem; /* 左右にわずかな余白 (1rem) */
-            text-align: left; /* テキストは左揃えを維持 */
+            margin: 1rem auto 3rem auto;
+            padding: 0 1rem;
+            text-align: left;
         }
     </style>
 </head>
@@ -89,9 +85,13 @@
         
         <div class="input-group bg-blue-50 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="md:col-span-2">
-                <label for="charSelect" class="block text-base font-semibold text-gray-700 mb-2">
-                    キャラクターを選択:
+                <label for="charSearch" class="block text-base font-semibold text-gray-700 mb-1">
+                    キャラクターを選択 (検索):
                 </label>
+                <input type="text" id="charSearch" placeholder="名前またはIDで絞り込み..." 
+                       oninput="filterCharacters()"
+                       class="w-full p-2 mb-2 border border-blue-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base placeholder-gray-400">
+                
                 <select id="charSelect" onchange="updateAllCalculations()" 
                         class="w-full p-3 border border-blue-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-lg" disabled>
                     <option value="" disabled selected>データロード待ち</option>
@@ -231,7 +231,7 @@
             なおこのHTMLコードはGoogleのGeminiによって生成されました。
         </p>
         <div class="version-info mt-3">
-            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.10 (最速装備ロジック修正)</p>
+            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.13 (キャラソート・検索機能追加)</p>
         </div>
     </div>
 
@@ -270,32 +270,13 @@
             "HP": "闘技+30%", "MP": "不変", "ATK": "15%", 
             "DEF": "25%", "AGL": "20%", "WIS": "15%"
         };
-        
-        // 1. 最速装備の動的設定
+
         const FASTEST_AGL_CONFIG = {
-            // type_number: 1 (その他/未定義)
-            'default': {
-                value: 182, 
-                breakdown: "獣王爪+102、ベスト+43、星腕輪+37 (34+all3)",
-                label: "その他"
-            },
-            // type_number: 2 (ぼうぎょ/Defense Type)
-            2: {
-                value: 154, // 102 + 15 + 37
-                breakdown: "獣王爪+102、カブト+15、星腕輪+37 (34+all3)",
-                label: "ぼうぎょ"
-            },
-            // type_number: 3 (まほう/Magic Type)
-            3: {
-                value: 170, // 102 + 31 + 37
-                breakdown: "獣王爪+102、ローブ+31、星腕輪+37 (34+all3)",
-                label: "まほう"
-            }
+            'default': { value: 182, breakdown: "獣王爪+102、ベスト+43、星腕輪+37 (34+all3)", label: "その他" },
+            2: { value: 154, breakdown: "獣王爪+102、カブト+15、星腕輪+37 (34+all3)", label: "ぼうぎょ" },
+            3: { value: 170, breakdown: "獣王爪+102、ローブ+31、星腕輪+37 (34+all3)", label: "まほう" }
         };
 
-        /**
-         * キャラクタータイプに基づき、最速装備の構成を取得する
-         */
         function getFastestAglConfig(typeNumber) {
             return FASTEST_AGL_CONFIG[typeNumber] || FASTEST_AGL_CONFIG['default'];
         }
@@ -323,7 +304,12 @@
                 }
                 charMasterData = await response.json();
                 
+                // データ読み込み直後にID降順でソート
+                charMasterData.sort((a, b) => b.id - a.id);
+                
+                // 初期状態で全リストを表示
                 populateCharacterSelect();
+                
                 populateAwakeningSelect();
                 populateFixedInputs();
                 
@@ -361,6 +347,7 @@
                     charSelect.value = charIdFromUrl;
                 }
             } else if (charMasterData.length > 0) {
+                // デフォルトは最新キャラ（ソート済みなので先頭）
                 charSelect.value = charMasterData[0].id;
             }
 
@@ -390,8 +377,81 @@
 
 
         // ----------------------------------------------------
-        // 3. MR/計算ロジック
+        // 3. UIロジック (検索機能含む)
         // ----------------------------------------------------
+
+        // 検索ボックスの入力イベントハンドラ
+        function filterCharacters() {
+            const searchText = document.getElementById('charSearch').value.toLowerCase();
+            populateCharacterSelect(searchText);
+        }
+
+        // キャラクター選択肢の生成 (フィルタリング対応)
+        function populateCharacterSelect(filterText = "") {
+            const select = document.getElementById('charSelect');
+            const currentSelectedValue = select.value; // 現在選択中の値を保持
+            
+            select.innerHTML = ''; // 一旦クリア
+
+            // フィルタリング処理
+            const filteredData = charMasterData.filter(char => {
+                const searchStr = `${char.id} ${char.name_jp}`.toLowerCase();
+                return searchStr.includes(filterText);
+            });
+
+            if (filteredData.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = "該当するキャラクターがいません";
+                option.disabled = true;
+                select.appendChild(option);
+            } else {
+                filteredData.forEach((char) => {
+                    const option = document.createElement('option');
+                    option.value = char.id; 
+                    // 表示形式: "ID. キャラクター名"
+                    option.textContent = `${char.id}. ${char.name_jp}`;
+                    select.appendChild(option);
+                });
+            }
+
+            // フィルタリング後、以前選択していたキャラが含まれていれば選択状態を維持
+            // 含まれていなければ、リストの先頭を選択 (ただしロード時以外は勝手に変えないほうが良い場合もあるが、今回は計算更新のため先頭へ)
+            if (currentSelectedValue && Array.from(select.options).some(opt => opt.value === currentSelectedValue)) {
+                select.value = currentSelectedValue;
+            } else if (select.options.length > 0 && !select.options[0].disabled) {
+                select.selectedIndex = 0;
+                // 選択が変わったので計算更新
+                updateAllCalculations();
+            }
+        }
+        
+        function populateAwakeningSelect() {
+            const select = document.getElementById('awakeningLevel');
+            select.innerHTML = '';
+            for (let level = 0; level <= 5; level++) {
+                const option = document.createElement('option');
+                option.value = level;
+                option.textContent = `${level}凸 (${level === 5 ? '完凸' : level === 0 ? '無覚醒' : level + '段階覚醒'})`;
+                select.appendChild(option);
+            }
+        }
+        
+        function populateFixedInputs() {
+            const container = document.getElementById('fixedInputContainer');
+            let html = '';
+            STATUS_KEYS.forEach((key) => {
+                html += `
+                    <div>
+                        <label for="fixedInput${key}" class="block text-sm font-medium text-gray-700">${STATUS_LABELS[key]}</label>
+                        <input type="number" id="fixedInput${key}" oninput="updateAllCalculations()" min="0" value="0"
+                               class="mt-1 w-full py-1.5 px-2 border border-green-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-base text-right">
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // ... (以下、計算ロジックやリセット関数などは前回と同じ) ...
 
         function adjustMrLevel(adjustment) {
             const input = document.getElementById('mrLevel');
@@ -423,47 +483,6 @@
             }
 
             return bonusCount / 100; 
-        }
-
-        // ----------------------------------------------------
-        // 4. UI生成/更新とメインロジック
-        // ----------------------------------------------------
-
-        function populateCharacterSelect() {
-            const select = document.getElementById('charSelect');
-            select.innerHTML = ''; 
-            charMasterData.forEach((char) => {
-                const option = document.createElement('option');
-                option.value = char.id; 
-                option.textContent = char.name_jp;
-                select.appendChild(option);
-            });
-        }
-        
-        function populateAwakeningSelect() {
-            const select = document.getElementById('awakeningLevel');
-            select.innerHTML = '';
-            for (let level = 0; level <= 5; level++) {
-                const option = document.createElement('option');
-                option.value = level;
-                option.textContent = `${level}凸 (${level === 5 ? '完凸' : level === 0 ? '無覚醒' : level + '段階覚醒'})`;
-                select.appendChild(option);
-            }
-        }
-        
-        function populateFixedInputs() {
-            const container = document.getElementById('fixedInputContainer');
-            let html = '';
-            STATUS_KEYS.forEach((key) => {
-                html += `
-                    <div>
-                        <label for="fixedInput${key}" class="block text-sm font-medium text-gray-700">${STATUS_LABELS[key]}</label>
-                        <input type="number" id="fixedInput${key}" oninput="updateAllCalculations()" min="0" value="0"
-                               class="mt-1 w-full py-1.5 px-2 border border-green-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-base text-right">
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
         }
 
         function setFixedAgl(aglValue, shouldResetAll) {
@@ -513,9 +532,6 @@
             history.replaceState(null, '', newUrl);
         }
 
-        /**
-         * メイン計算処理
-         */
         function updateAllCalculations() {
             if (charMasterData.length === 0) return;
 
@@ -530,29 +546,23 @@
             const awakeningData = char.awakening_table.find(item => item.level === awakeningLevel);
             if (!awakeningData) return;
             
-            // 2. 最速装備の動的更新
+            // 最速装備の動的更新
             const typeNumber = char.type_number;
             const aglConfig = getFastestAglConfig(typeNumber);
-            const fastestAglValue = aglConfig.value;
-            const fastestAglBreakdown = aglConfig.breakdown;
-            const fastestAglLabel = aglConfig.label;
-            
-            // 最速装備ボタンと注釈を更新
             const fastestButton = document.getElementById('fastestAglButton');
             const fastestNote = document.getElementById('fastestAglNote');
             
-            fastestButton.innerHTML = `⚡ 最速装備 (+${fastestAglValue})`;
-            fastestButton.setAttribute('onclick', `setFixedAgl(${fastestAglValue}, true)`);
-            
-            const typeNote = typeNumber ? ` (タイプ: ${fastestAglLabel})` : '';
-            fastestNote.innerHTML = `※最速装備${typeNote}: ${fastestAglBreakdown}`;
+            fastestButton.innerHTML = `⚡ 最速装備 (+${aglConfig.value})`;
+            fastestButton.setAttribute('onclick', `setFixedAgl(${aglConfig.value}, true)`);
+            const typeNote = typeNumber ? ` (タイプ: ${aglConfig.label})` : '';
+            fastestNote.innerHTML = `※最速装備${typeNote}: ${aglConfig.breakdown}`;
             
             // 計算式表示エリアをクリア
             document.getElementById('calculationDisplay').innerHTML = 'セルにカーソルを合わせるか、タップしてください。';
             document.getElementById('calculationDisplayContainer').classList.add('hidden');
 
 
-            // 1. 覚醒加算値の表示
+            // 覚醒加算値の表示
             const awkAdditives = awakeningData.additives;
             let additiveDisplayHtml = '現在の覚醒段階による固定値増加: ';
             const additiveParts = STATUS_KEYS.map((key, i) => {
@@ -575,7 +585,6 @@
             let resultHtml = '';
             let panelValues = [];
             
-            // 2. 特性による固定値ボーナスを計算
             let characteristicAdds = [];
             
             if (awakeningData.characteristic_additives && awakeningData.characteristic_additives.length === 6) {
@@ -610,7 +619,6 @@
                 const awkMagPercent = awkMag / 100;
                 const baseMultiplier = 1 + mrRate + awkMagPercent;
                 
-                // MR補正率のサマリー表示 (特性固定値の表示を削除済み)
                 const spanClass = (key === 'AGL') ? 'font-extrabold text-red-600' : 'font-bold text-gray-800';
                 mrSummaryHtml += `${STATUS_LABELS[key]}: <span class="${spanClass}">+${(mrRate * 100).toFixed(0)}%</span> / `;
 
@@ -673,7 +681,6 @@
                 `;
             });
             
-            // パネル内訳の表示更新
             let panelSummaryHtml = '現在選択中のキャラクターには、特性による固定値増加はありません。';
             if (panelValues.length > 0) {
                 const summaryParts = panelValues.map(p => `${STATUS_LABELS[p.key]}: +${p.value}`);
@@ -692,10 +699,6 @@
             
             updateUrlParameters(selectedCharId, awakeningLevel, mrLevel, fixedValues, isPanelEnabled);
         }
-        
-        // ----------------------------------------------------
-        // 5. 計算式表示機能
-        // ----------------------------------------------------
         
         function setupCalculationDisplayListeners() {
             const tableBody = document.getElementById('statusResultTableBody');
@@ -743,11 +746,9 @@
             const baseMultFloat = parseFloat(basemult);
             const buffPercFloat = parseFloat(buffperc) || 0; 
 
-            // [1] Additives (加算部)
             const additiveFormula = `(${baseValInt} [基礎] + ${awkAddInt} [覚醒] + ${fixedAddInt} [装備] + ${panelAddInt} [パネル])`;
             const totalAddStr = totalAddInt;
 
-            // [2] Multipliers (倍率部)
             const mrRatePercent = (mrRateFloat * 100).toFixed(0);
             const awkMagPercent = (awkPercFloat * 100).toFixed(0);
             const baseMultiplierFormula = `(1 + ${mrRatePercent}% [MR補正] + ${awkMagPercent}% [覚醒倍率])`;
