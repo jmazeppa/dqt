@@ -56,18 +56,18 @@
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
-        /* AGL行の強調スタイル */
+        /* AGL行の強調スタイル (修正: 枠線を削除し、フォントサイズ調整用クラスを用意) */
         .agl-row-highlight {
-            border-bottom-width: 4px;
-            border-color: #f87171; 
-            background-color: #fff7ed; 
-            font-family: 'Inter', sans-serif;
+            background-color: #fff7ed; /* orange-50 */
+            border-bottom: 1px solid #e5e7eb; /* 通常のボーダーに戻す */
         }
-        .agl-text-highlight {
-            font-size: 1.1rem;
+        /* 素早さ行のフォント強調 */
+        .agl-font-emphasize .result-cell, .agl-font-emphasize td {
+            font-size: 1.05rem; /* 少し大きく */
+            color: #dc2626; /* 赤字 */
             font-weight: 900;
-            color: #dc2626; 
         }
+        
         .author-info {
             max-width: 800px;
             margin: 1rem auto 3rem auto;
@@ -114,7 +114,7 @@
 
         <div class="input-group bg-yellow-50">
             <label for="mrLevel" class="block text-base font-semibold text-gray-700 mb-2">
-                マスターランク (MR) レベル: <span id="mrLevelDisplay" class="font-extrabold text-red-600">70</span>
+                <span id="currentFamilyName" class="text-indigo-600 font-bold"></span> マスターランク (MR) レベル: <span id="mrLevelDisplay" class="font-extrabold text-red-600">70</span>
             </label>
             <div class="flex items-center space-x-2">
                 <input type="range" id="mrLevel" oninput="updateAllCalculations()" min="0" max="100" value="70"
@@ -172,10 +172,10 @@
         </div>
 
         <div class="w-full bg-white py-4 rounded-lg shadow-2xl border-4 border-red-500/50">
-            <h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2 flex justify-between items-center px-4">
-                <span>最終ステータス結果 (Lv Max)</span>
-                <span id="summaryDisplay" class="text-xs font-semibold text-gray-600">--</span> 
-            </h3>
+            <div class="mb-4 border-b border-gray-200 pb-2 px-4 text-center">
+                <h3 class="text-lg font-bold text-gray-800">最終ステータス結果 (Lv Max)</h3>
+                <h4 id="summaryDisplay" class="text-sm font-semibold text-gray-600 mt-1">--</h4> 
+            </div>
             
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white border border-gray-200">
@@ -231,7 +231,7 @@
             なおこのHTMLコードはGoogleのGeminiによって生成されました。
         </p>
         <div class="version-info mt-3">
-            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.13 (キャラソート・検索機能追加)</p>
+            <p class="text-xs text-gray-500">最終更新日: 2025/12/08 バージョン: 0.1.14 (UI調整: MRラベル, 結果ヘッダー, AGL強調)</p>
         </div>
     </div>
 
@@ -304,12 +304,9 @@
                 }
                 charMasterData = await response.json();
                 
-                // データ読み込み直後にID降順でソート
                 charMasterData.sort((a, b) => b.id - a.id);
                 
-                // 初期状態で全リストを表示
                 populateCharacterSelect();
-                
                 populateAwakeningSelect();
                 populateFixedInputs();
                 
@@ -347,7 +344,6 @@
                     charSelect.value = charIdFromUrl;
                 }
             } else if (charMasterData.length > 0) {
-                // デフォルトは最新キャラ（ソート済みなので先頭）
                 charSelect.value = charMasterData[0].id;
             }
 
@@ -377,23 +373,20 @@
 
 
         // ----------------------------------------------------
-        // 3. UIロジック (検索機能含む)
+        // 3. UIロジック
         // ----------------------------------------------------
 
-        // 検索ボックスの入力イベントハンドラ
         function filterCharacters() {
             const searchText = document.getElementById('charSearch').value.toLowerCase();
             populateCharacterSelect(searchText);
         }
 
-        // キャラクター選択肢の生成 (フィルタリング対応)
         function populateCharacterSelect(filterText = "") {
             const select = document.getElementById('charSelect');
-            const currentSelectedValue = select.value; // 現在選択中の値を保持
+            const currentSelectedValue = select.value; 
             
-            select.innerHTML = ''; // 一旦クリア
+            select.innerHTML = ''; 
 
-            // フィルタリング処理
             const filteredData = charMasterData.filter(char => {
                 const searchStr = `${char.id} ${char.name_jp}`.toLowerCase();
                 return searchStr.includes(filterText);
@@ -408,19 +401,15 @@
                 filteredData.forEach((char) => {
                     const option = document.createElement('option');
                     option.value = char.id; 
-                    // 表示形式: "ID. キャラクター名"
                     option.textContent = `${char.id}. ${char.name_jp}`;
                     select.appendChild(option);
                 });
             }
 
-            // フィルタリング後、以前選択していたキャラが含まれていれば選択状態を維持
-            // 含まれていなければ、リストの先頭を選択 (ただしロード時以外は勝手に変えないほうが良い場合もあるが、今回は計算更新のため先頭へ)
             if (currentSelectedValue && Array.from(select.options).some(opt => opt.value === currentSelectedValue)) {
                 select.value = currentSelectedValue;
             } else if (select.options.length > 0 && !select.options[0].disabled) {
                 select.selectedIndex = 0;
-                // 選択が変わったので計算更新
                 updateAllCalculations();
             }
         }
@@ -450,8 +439,6 @@
             });
             container.innerHTML = html;
         }
-
-        // ... (以下、計算ロジックやリセット関数などは前回と同じ) ...
 
         function adjustMrLevel(adjustment) {
             const input = document.getElementById('mrLevel');
@@ -546,23 +533,28 @@
             const awakeningData = char.awakening_table.find(item => item.level === awakeningLevel);
             if (!awakeningData) return;
             
-            // 最速装備の動的更新
+            // 2. 最速装備の動的更新
             const typeNumber = char.type_number;
             const aglConfig = getFastestAglConfig(typeNumber);
+            const fastestAglValue = aglConfig.value;
+            const fastestAglBreakdown = aglConfig.breakdown;
+            const fastestAglLabel = aglConfig.label;
+            
             const fastestButton = document.getElementById('fastestAglButton');
             const fastestNote = document.getElementById('fastestAglNote');
             
-            fastestButton.innerHTML = `⚡ 最速装備 (+${aglConfig.value})`;
-            fastestButton.setAttribute('onclick', `setFixedAgl(${aglConfig.value}, true)`);
-            const typeNote = typeNumber ? ` (タイプ: ${aglConfig.label})` : '';
-            fastestNote.innerHTML = `※最速装備${typeNote}: ${aglConfig.breakdown}`;
+            fastestButton.innerHTML = `⚡ 最速装備 (+${fastestAglValue})`;
+            fastestButton.setAttribute('onclick', `setFixedAgl(${fastestAglValue}, true)`);
+            
+            const typeNote = typeNumber ? ` (タイプ: ${fastestAglLabel})` : '';
+            fastestNote.innerHTML = `※最速装備${typeNote}: ${fastestAglBreakdown}`;
             
             // 計算式表示エリアをクリア
             document.getElementById('calculationDisplay').innerHTML = 'セルにカーソルを合わせるか、タップしてください。';
             document.getElementById('calculationDisplayContainer').classList.add('hidden');
 
 
-            // 覚醒加算値の表示
+            // 1. 覚醒加算値の表示
             const awkAdditives = awakeningData.additives;
             let additiveDisplayHtml = '現在の覚醒段階による固定値増加: ';
             const additiveParts = STATUS_KEYS.map((key, i) => {
@@ -576,9 +568,11 @@
             }
             document.getElementById('awakeningAdditivesDisplay').innerHTML = additiveDisplayHtml;
             
-            // UI情報更新
-            const summaryHtml = `${char.name_jp} ${awakeningLevel}凸 <br class="sm:hidden"> / MR${mrLevel}`;
-            document.getElementById('summaryDisplay').innerHTML = summaryHtml;
+            // UI情報更新 (修正: 系統名を表示、結果タイトルをh3/h4に分離)
+            document.getElementById('currentFamilyName').textContent = char.family_jp;
+            
+            const summaryHtml = `${char.name_jp} ${awakeningLevel}凸 / MR${mrLevel}`;
+            document.getElementById('summaryDisplay').textContent = summaryHtml;
 
             const fixedValues = {};
             let mrSummaryHtml = '';
@@ -667,8 +661,10 @@
                     finalStatusCells += `<td class="result-cell text-red-600 bg-red-50 border-r" tabindex="0" ${dataAttributesBuff}>${cellContent}</td>`;
                 }
 
-                const rowClass = (key === 'AGL') ? "agl-row-highlight" : "border-b border-gray-200";
-                const statLabelClass = (key === 'AGL') ? "agl-text-highlight result-cell font-extrabold border-r" : "result-cell font-bold text-gray-800 border-r";
+                // 3. AGL行のスタイル変更 (枠線削除 -> 背景色とフォント強調クラス追加)
+                const rowClass = (key === 'AGL') ? "agl-row-highlight agl-font-emphasize" : "border-b border-gray-200";
+                // ラベルのスタイルも合わせる
+                const statLabelClass = (key === 'AGL') ? "result-cell border-r" : "result-cell font-bold text-gray-800 border-r";
                 
                 resultHtml += `
                     <tr class="${rowClass}">
