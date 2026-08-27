@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DQT ステータス自由入力計算</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f0f2f5;
+            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 1rem;
+        }
+        .card {
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+        input[type="text"], input[type="number"], select, button {
+            min-height: 44px;
+            font-size: 16px;
+        }
+        .result-cell {
+            padding: 0.5rem 0.25rem;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .result-cell[data-formula] {
+            cursor: pointer;
+        }
+        .result-cell[data-formula]:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: -2px;
+        }
+        @media (max-width: 390px) {
+            .container { padding: 0.5rem; }
+            .card { padding: 0.75rem; }
+            .result-cell { font-size: 0.82rem; }
+        }
+    </style>
+</head>
+<body>
+    <main class="container space-y-4">
+        <h1 class="text-2xl font-black text-center text-indigo-700">DQT ステータス自由入力計算</h1>
+
+        <section class="card bg-blue-50 space-y-4">
+            <div>
+                <label for="characterName" class="block font-semibold mb-1">キャラクター名</label>
+                <input id="characterName" type="text" value="キャラクター" oninput="calculate()"
+                       class="w-full box-border p-2 border border-blue-300 rounded-lg">
+            </div>
+
+            <fieldset>
+                <legend class="font-semibold mb-2">入力値の種類</legend>
+                <div class="space-y-2">
+                    <label class="flex gap-2 items-start p-2 bg-white rounded-lg">
+                        <input type="radio" name="calcMode" value="new" checked onchange="changeMode()">
+                        <span><b>A. 新キャラ無凸用</b><br><span class="text-sm text-gray-600">無凸値へ完凸の覚醒倍率25%を加えて計算</span></span>
+                    </label>
+                    <label class="flex gap-2 items-start p-2 bg-white rounded-lg">
+                        <input type="radio" name="calcMode" value="theory" onchange="changeMode()">
+                        <span><b>B. 理論値計算用</b><br><span class="text-sm text-gray-600">既に完凸の図鑑ステータスを入力</span></span>
+                    </label>
+                    <label class="flex gap-2 items-start p-2 bg-white rounded-lg">
+                        <input type="radio" name="calcMode" value="battle" onchange="changeMode()">
+                        <span><b>C. 戦闘中計算用</b><br><span class="text-sm text-gray-600">MR・装備・開花・パネル込みの値を入力</span></span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <div>
+                <h2 class="font-semibold mb-2">基礎値を直接入力</h2>
+                <div id="baseInputs" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                <p class="mt-2 text-xs text-gray-600">空欄のステータスは結果表に表示しません。</p>
+            </div>
+
+            <div id="battleStageArea" class="hidden">
+                <h2 class="font-semibold mb-2">戦闘中の入力段階</h2>
+                <p class="mb-3 text-xs text-gray-600">HP・MP以外は現在値の段階を選択してください。入力段階以外は、現在値を倍率で割り戻した概算値です。</p>
+                <div id="battleStageInputs" class="space-y-3"></div>
+            </div>
+        </section>
+
+        <section id="adjustmentArea" class="space-y-4">
+            <div class="card bg-yellow-50">
+                <label for="mrLevel" class="block font-semibold mb-2">
+                    マスターランク (MR): <span id="mrLevelDisplay" class="text-red-600 font-black">0</span>
+                </label>
+                <input id="mrLevel" type="range" min="0" max="100" value="0" oninput="calculate()"
+                       class="w-full accent-yellow-500">
+                <p id="mrRateSummary" class="mt-2 text-xs text-gray-600"></p>
+            </div>
+
+            <div class="card bg-green-50">
+                <h2 class="font-semibold mb-2">装備・才能開花・スキルパネルの固定値（合計）</h2>
+                <div id="fixedInputs" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                <button type="button" onclick="resetFixedValues()"
+                        class="mt-3 w-full bg-red-500 text-white font-bold rounded-lg">固定値をリセット</button>
+                <p class="mt-2 text-xs text-gray-600">固定値はMR補正と覚醒倍率の対象です。</p>
+            </div>
+        </section>
+
+        <section class="card bg-purple-50">
+            <label for="conditionRate" class="block font-semibold mb-2">
+                HP・MP以外の状態補正: <span id="conditionRateDisplay" class="text-purple-700 font-black">base</span>
+            </label>
+            <input id="conditionRate" type="range" min="-10" max="20" step="10" value="0" oninput="calculate()"
+                   class="w-full accent-purple-600">
+            <div class="flex justify-between text-xs text-gray-600">
+                <span>10% down</span><span>base</span><span>10% up</span><span>20% up</span>
+            </div>
+        </section>
+
+        <section class="card bg-white border-4 border-red-200">
+            <header class="text-center mb-3">
+                <h2 class="text-lg font-bold">ステータス計算結果</h2>
+                <p id="summaryDisplay" class="text-sm text-gray-600"></p>
+            </header>
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-200">
+                    <thead>
+                        <tr class="bg-gray-100 text-xs">
+                            <th class="result-cell">ステ</th>
+                            <th class="result-cell text-blue-600">基礎</th>
+                            <th class="result-cell text-red-600">1up</th>
+                            <th class="result-cell text-red-600">2up</th>
+                            <th class="result-cell text-red-600">3up</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody"></tbody>
+                </table>
+            </div>
+            <p id="emptyMessage" class="py-5 text-center text-sm text-gray-500">ステータスを入力してください。</p>
+        </section>
+
+        <section id="formulaArea" class="card bg-gray-800 text-white hidden">
+            <h2 class="font-semibold mb-2">選択セルの計算式</h2>
+            <div id="formulaDisplay" class="font-mono text-xs break-words"></div>
+        </section>
+
+        <div class="text-xs text-gray-500 text-center pb-6">
+            <p>計算結果は参考値です。ゲーム内の表示と一致することを保証するものではありません。</p>
+            <p class="mt-1">最終更新日: 2026/08/28 バージョン: 0.1.0</p>
+        </div>
+    </main>
+
+    <script>
+        const STATUS_KEYS = ['HP', 'MP', 'ATK', 'DEF', 'AGL', 'WIS'];
+        const STATUS_LABELS = { HP: 'HP', MP: 'MP', ATK: '攻撃', DEF: '守備', AGL: '素早', WIS: '賢さ' };
+        const MR_BONUS_ORDER = ['HP', 'DEF', 'AGL', 'ATK', 'WIS', 'MP'];
+        const BUFF_RATES = {
+            HP: [0.30, 0.30, 0.30], MP: [null, null, null], ATK: [0.15, 0.30, 0.45],
+            DEF: [0.25, 0.50, 0.75], AGL: [0.20, 0.40, 0.60], WIS: [0.15, 0.30, 0.45]
+        };
+        const BUFF_LABELS = { HP: '闘技+30%', MP: '不変', ATK: '15%', DEF: '25%', AGL: '20%', WIS: '15%' };
+        const CONDITION_LABELS = { '-10': '10% down', '0': 'base', '10': '10% up', '20': '20% up' };
+
+        function createInputs() {
+            document.getElementById('baseInputs').innerHTML = STATUS_KEYS.map(key => `
+                <div>
+                    <label for="base${key}" class="block text-sm font-medium">${STATUS_LABELS[key]}</label>
+                    <input id="base${key}" type="number" min="0" inputmode="numeric" placeholder="未入力" oninput="calculate()"
+                           class="w-full box-border p-2 border border-blue-300 rounded-lg text-right">
+                </div>
+            `).join('');
+            document.getElementById('fixedInputs').innerHTML = STATUS_KEYS.map(key => `
+                <div>
+                    <label for="fixed${key}" class="block text-sm font-medium">${STATUS_LABELS[key]}</label>
+                    <input id="fixed${key}" type="number" min="0" inputmode="numeric" value="0" oninput="calculate()"
+                           class="w-full box-border p-2 border border-green-300 rounded-lg text-right">
+                </div>
+            `).join('');
+            document.getElementById('battleStageInputs').innerHTML = STATUS_KEYS.filter(key => key !== 'HP' && key !== 'MP').map(key => `
+                <div class="grid grid-cols-2 gap-2 p-2 bg-white rounded-lg">
+                    <label for="battleStage${key}" class="text-sm font-medium self-center">${STATUS_LABELS[key]}の現在段階</label>
+                    <select id="battleStage${key}" onchange="changeBattleStage('${key}')"
+                            class="w-full box-border p-2 border border-indigo-300 rounded-lg">
+                        <option value="0">base</option>
+                        <option value="1">1up</option>
+                        <option value="2">2up</option>
+                        <option value="3">3up</option>
+                    </select>
+                </div>
+            `).join('');
+        }
+
+        function getMode() {
+            return document.querySelector('input[name="calcMode"]:checked').value;
+        }
+
+        function getMRRate(level, key) {
+            if (level === 0) return 0;
+            const position = MR_BONUS_ORDER.indexOf(key) + 1;
+            const zeroBasedLevel = level - 1;
+            const cycles = Math.floor(zeroBasedLevel / 6);
+            const remainder = zeroBasedLevel % 6;
+            return (cycles + (position <= remainder + 1 ? 1 : 0)) / 100;
+        }
+
+        function changeMode() {
+            const battleMode = getMode() === 'battle';
+            document.getElementById('adjustmentArea').classList.toggle('hidden', battleMode);
+            document.getElementById('battleStageArea').classList.toggle('hidden', !battleMode);
+            STATUS_KEYS.forEach(key => {
+                const input = document.getElementById(`base${key}`);
+                if (input) input.previousElementSibling.textContent = battleMode ? `${STATUS_LABELS[key]}（現在値）` : STATUS_LABELS[key];
+            });
+            calculate();
+        }
+
+        function changeBattleStage(key) {
+            calculate();
+        }
+
+        function resetFixedValues() {
+            STATUS_KEYS.forEach(key => { document.getElementById(`fixed${key}`).value = 0; });
+            calculate();
+        }
+
+        function calculate() {
+            const mode = getMode();
+            const mrLevel = parseInt(document.getElementById('mrLevel').value, 10);
+            const conditionPercent = parseInt(document.getElementById('conditionRate').value, 10);
+            const conditionRate = conditionPercent / 100;
+            const characterName = document.getElementById('characterName').value.trim() || 'キャラクター';
+            const modeLabel = mode === 'new' ? '新キャラ無凸用（完凸換算）' : mode === 'theory' ? '理論値計算用' : '戦闘中計算用';
+
+            document.getElementById('mrLevelDisplay').textContent = mrLevel;
+            document.getElementById('conditionRateDisplay').textContent = CONDITION_LABELS[String(conditionPercent)];
+            document.getElementById('summaryDisplay').textContent = `${characterName} / ${modeLabel}`;
+
+            const rows = [];
+            const mrParts = [];
+            STATUS_KEYS.forEach(key => {
+                const rawInput = document.getElementById(`base${key}`).value;
+                if (rawInput === '') return;
+
+                const inputValue = Math.max(0, parseInt(rawInput, 10) || 0);
+                const supportsBattleStage = key !== 'HP' && key !== 'MP';
+                const battleStage = mode === 'battle' && supportsBattleStage
+                    ? parseInt(document.getElementById(`battleStage${key}`).value, 10)
+                    : 0;
+                const fixedValue = mode === 'battle' ? 0 : Math.max(0, parseInt(document.getElementById(`fixed${key}`).value, 10) || 0);
+                const mrRate = mode === 'battle' ? 0 : getMRRate(mrLevel, key);
+                const awakeningRate = mode === 'battle' ? 0 : 0.25;
+                const applicableConditionRate = key === 'HP' || key === 'MP' ? 0 : conditionRate;
+                const selectedBattleRate = mode === 'battle' && battleStage > 0 ? BUFF_RATES[key][battleStage - 1] : 0;
+                const estimatedBattleBase = mode === 'battle' ? inputValue / (1 + selectedBattleRate) : inputValue;
+                const normalizedInput = mode === 'theory' ? inputValue / 1.25 : mode === 'battle' ? estimatedBattleBase : inputValue;
+                const additiveValue = normalizedInput + fixedValue;
+                const baseMultiplier = 1 + awakeningRate + mrRate + applicableConditionRate;
+                let baseResult = Math.floor(additiveValue * baseMultiplier);
+
+                if (mode !== 'battle') mrParts.push(`${STATUS_LABELS[key]} +${Math.round(mrRate * 100)}%`);
+
+                let cells = [];
+                let effectiveBuffBase = null;
+                if (mode === 'battle' && supportsBattleStage && battleStage > 0) {
+                    effectiveBuffBase = estimatedBattleBase;
+                    baseResult = Math.floor(effectiveBuffBase * (1 + applicableConditionRate));
+                    cells = [{ value: baseResult, buffRate: 0, stage: 0 }];
+                    BUFF_RATES[key].forEach((buffRate, index) => {
+                        const value = index + 1 === battleStage && applicableConditionRate === 0
+                            ? inputValue
+                            : Math.floor(effectiveBuffBase * (1 + applicableConditionRate + buffRate));
+                        cells.push({ value, buffRate, stage: index + 1 });
+                    });
+                } else {
+                    cells = [{ value: baseResult, buffRate: 0, stage: 0 }];
+                    BUFF_RATES[key].forEach(buffRate => {
+                        if (buffRate === null) {
+                            cells.push({ value: '-', buffRate: null, stage: cells.length });
+                        } else if (key === 'HP') {
+                            cells.push({ value: Math.floor(additiveValue * baseMultiplier * 1.30), buffRate, stage: cells.length });
+                        } else {
+                            cells.push({ value: Math.floor(additiveValue * (baseMultiplier + buffRate)), buffRate, stage: cells.length });
+                        }
+                    });
+                }
+
+                const formulaData = { mode, key, inputValue, normalizedInput, fixedValue, awakeningRate, mrRate, applicableConditionRate, additiveValue, baseMultiplier, battleStage, selectedBattleRate, effectiveBuffBase };
+                rows.push(`
+                    <tr class="border-t ${key === 'AGL' ? 'bg-orange-50 font-bold' : ''}">
+                        <th class="result-cell text-sm">${STATUS_LABELS[key]}<br><span class="text-[0.65rem] text-gray-500">(${BUFF_LABELS[key]})</span></th>
+                        ${cells.map((cell, index) => {
+                            const formulaAttribute = cell.buffRate === null
+                                ? ''
+                                : `data-formula='${JSON.stringify({ ...formulaData, buffRate: cell.buffRate, result: cell.value })}'`;
+                            const selectedClass = mode === 'battle' && cell.stage === battleStage ? 'ring-2 ring-inset ring-indigo-600 font-black' : '';
+                            const approximateMark = mode === 'battle' && battleStage > 0 && cell.stage !== battleStage ? '≈' : '';
+                            return `<td tabindex="0" class="result-cell ${index === 0 ? 'text-blue-600 bg-blue-50' : 'text-red-600 bg-red-50'} ${selectedClass}" ${formulaAttribute}>${approximateMark}${cell.value}</td>`;
+                        }).join('')}
+                    </tr>
+                `);
+            });
+
+            document.getElementById('mrRateSummary').textContent = mrParts.length ? `現在のMR補正: ${mrParts.join(' / ')}` : 'ステータス入力後にMR補正を表示します。';
+            document.getElementById('resultBody').innerHTML = rows.join('');
+            document.getElementById('emptyMessage').classList.toggle('hidden', rows.length > 0);
+            document.getElementById('formulaArea').classList.add('hidden');
+        }
+
+        function showFormula(cell) {
+            if (!cell.dataset.formula) return;
+            const data = JSON.parse(cell.dataset.formula);
+            const parts = [`${data.normalizedInput} [覚醒前基礎]`];
+            if (data.mode !== 'battle') parts.push(`${data.fixedValue} [装備・開花・パネル]`);
+            const rates = [];
+            if (data.awakeningRate) rates.push('25% [完凸覚醒]');
+            if (data.mrRate) rates.push(`${Math.round(data.mrRate * 100)}% [MR]`);
+            if (data.applicableConditionRate) rates.push(`${Math.round(data.applicableConditionRate * 100)}% [状態補正]`);
+            if (data.buffRate) rates.push(`${Math.round(data.buffRate * 100)}% [up]`);
+            const additiveFormula = data.mode === 'battle' ? `${data.inputValue}` : `(${parts.join(' + ')})`;
+            const multiplier = data.baseMultiplier + (data.buffRate || 0);
+            let modeNote = '入力値と固定値へ各倍率を加算して適用';
+            if (data.mode === 'theory') modeNote = `${data.inputValue} [完凸図鑑値] ÷ 1.25 → ${data.normalizedInput.toFixed(4)} [覚醒前相当]`;
+            if (data.mode === 'battle') modeNote = '入力値を全補正込みの戦闘中基礎値として使用';
+            if (data.mode === 'battle' && data.effectiveBuffBase !== null) {
+                const targetRate = (data.buffRate || 0) + data.applicableConditionRate;
+                document.getElementById('formulaDisplay').innerHTML = `
+                    <div class="font-bold mb-1">${STATUS_LABELS[data.key]}: ${data.result}</div>
+                    <div>${data.inputValue} [現在値] ÷ (1 + ${data.selectedBattleRate.toFixed(2)} [入力段階率])</div>
+                    <div>= ${data.effectiveBuffBase.toFixed(4)} [推定base]</div>
+                    <div class="mt-1">${data.effectiveBuffBase.toFixed(4)} × (1 + ${targetRate.toFixed(2)} [対象倍率])</div>
+                    <div>≈ ${data.result}（概算・切り捨て）</div>
+                `;
+                document.getElementById('formulaArea').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('formulaDisplay').innerHTML = `
+                <div class="font-bold mb-1">${STATUS_LABELS[data.key]}: ${data.result}</div>
+                <div>${modeNote}</div>
+                <div class="mt-1">${additiveFormula} × (${rates.length ? `1 + ${rates.join(' + ')}` : '1'})</div>
+                <div>= ${data.additiveValue} × ${multiplier.toFixed(2)} = ${data.result}（切り捨て）</div>
+            `;
+            document.getElementById('formulaArea').classList.remove('hidden');
+        }
+
+        document.getElementById('resultBody').addEventListener('click', event => {
+            const cell = event.target.closest('[data-formula]');
+            if (cell) showFormula(cell);
+        });
+        document.getElementById('resultBody').addEventListener('focusin', event => {
+            const cell = event.target.closest('[data-formula]');
+            if (cell) showFormula(cell);
+        });
+
+        createInputs();
+        changeMode();
+    </script>
+</body>
+</html>
