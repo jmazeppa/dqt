@@ -163,7 +163,7 @@
 
         <div class="text-xs text-gray-500 text-center pb-6">
             <p>計算結果は参考値です。ゲーム内の表示と一致することを保証するものではありません。</p>
-            <p class="mt-1">最終更新日: 2026/08/29 バージョン: 0.2.0</p>
+            <p class="mt-1">最終更新日: 2026/08/29 バージョン: 0.2.1</p>
         </div>
     </main>
 
@@ -319,7 +319,7 @@
                 const mrRate = getMRRate(mrLevel, key);
                 const awakeningRate = mode === 'new' ? awakeningLevel * 0.05 : 0.25;
                 const applicableConditionRate = key === 'HP' || key === 'MP' ? 0 : conditionRate;
-                const normalizedInput = mode === 'theory' ? inputValue / 1.25 : inputValue;
+                const normalizedInput = mode === 'theory' ? Math.ceil(inputValue / 1.25) : inputValue;
                 const additiveValue = normalizedInput + fixedValue;
                 const baseMultiplier = 1 + awakeningRate + mrRate + applicableConditionRate;
                 const baseResult = roundDown(additiveValue * baseMultiplier);
@@ -382,7 +382,7 @@
             const additiveFormula = `(${parts.join(' + ')})`;
             const multiplier = data.baseMultiplier + (data.buffRate || 0);
             let modeNote = '入力値と固定値へ各倍率を加算して適用';
-            if (data.mode === 'theory') modeNote = `${data.inputValue} [完凸図鑑値] ÷ 1.25 → ${data.normalizedInput.toFixed(4)} [覚醒前相当]`;
+            if (data.mode === 'theory') modeNote = `ceil(${data.inputValue} [完凸図鑑値] ÷ 1.25) → ${data.normalizedInput} [覚醒前相当]`;
             document.getElementById('formulaDisplay').innerHTML = `
                 <div class="font-bold mb-1">${STATUS_LABELS[data.key]}: ${data.result}</div>
                 <div>${modeNote}</div>

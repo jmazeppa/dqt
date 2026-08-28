@@ -40,11 +40,31 @@ def main():
         page.locator("#awakeningLevel").select_option("3")
         assert row_values(page, "攻撃") == ["115", "130", "145", "160"]
 
-        # B: 覚醒選択を隠し、完凸図鑑値を保持
+        # B: 完凸図鑑値を切り上げで逆算し、固定値・MR・覚醒を適用
         page.locator('input[name="calcMode"][value="theory"]').check()
         assert page.locator("#awakeningArea").is_hidden()
-        page.locator("#baseDEF").fill("609")
-        assert row_values(page, "守備")[0] == "609"
+        page.locator("#baseATK").fill("")
+        page.locator("#baseDEF").fill("")
+        page.locator("#fixedAGL").fill("182")
+        page.locator("#mrLevel").fill("63")
+
+        # 出典と選定条件: knowledge/status.md「開幕ランキングを使った回帰テストの作成手順」
+        # 外部サイトへ依存せず、確認済み掲載値を固定して計算ロジックを回帰検証する。
+        theory_cases = [
+            ("アマテア", "557", "854"),
+            ("魔剣士ピサロ", "645", "949"),
+            ("ゲルダ", "637", "941"),
+            ("サンタアリーナ", "636", "939"),
+        ]
+        for character_name, encyclopedia_value, expected in theory_cases:
+            page.locator("#characterName").fill(character_name)
+            page.locator("#baseAGL").fill(encyclopedia_value)
+            assert row_values(page, "素早")[0] == expected
+
+        page.locator("#baseAGL").fill("557")
+        page.locator("#resultBody tr").filter(has_text="素早").locator("td").first.click()
+        formula = page.locator("#formulaDisplay").inner_text()
+        assert "ceil(557 [完凸図鑑値] ÷ 1.25) → 446" in formula
 
         # C: 覚醒選択を再表示し、MR9～12列とゾーマ実測値を検証
         page.locator('input[name="calcMode"][value="battle"]').check()
