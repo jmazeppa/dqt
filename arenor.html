@@ -475,19 +475,10 @@
         <small>※iPhone 13 (縦持ち) の場合、デフォルト値が推奨されます。</small></p>
         <div class="crop-settings-grid">
             <div class="crop-settings-item">
-                <label for="cropSx">PT開始位置X:</label>
-                <div class="input-with-buttons">
-                    <button class="decrement-btn" data-target="cropSx">-</button>
-                    <input type="number" id="cropSx" value="11" min="0" max="40">
-                    <button class="increment-btn" data-target="cropSx">+</button>
-                </div>
-                <span class="unit">%</span>
-            </div>
-            <div class="crop-settings-item">
                 <label for="cropSOpponentY">相手開始位置Y:</label>
                 <div class="input-with-buttons">
                     <button class="decrement-btn" data-target="cropSOpponentY">-</button>
-                    <input type="number" id="cropSOpponentY" value="35" min="0" max="100">
+                    <input type="number" id="cropSOpponentY" value="36" min="0" max="100">
                     <button class="increment-btn" data-target="cropSOpponentY">+</button>
                 </div>
                 <span class="unit">%</span>
@@ -513,41 +504,23 @@
         </div>
 
         <details id="defenseOptions" class="defense-options">
-            <summary>ギルド大会用の防衛パーティを画像に入れる</summary>
+            <summary>ギルド大会用の防衛パーティを追加</summary>
             <div class="defense-options-content">
                 <label for="defenseImageUpload"><strong>防衛パーティ画像:</strong></label>
                 <input type="file" id="defenseImageUpload" accept="image/png, image/jpeg">
                 <p id="defenseFileStatus" class="info defense-file-status">画像は選択されていません。</p>
                 <button type="button" id="clearDefenseImageButton" class="secondary-button">防衛画像を解除</button>
-                <p class="info">※大会全体で使用した防衛パーティが表示されている画像を1枚選択してください。</p>
+                <p class="info">※大会の模擬戦で🔍マークを押すと見られる画像を1枚選択してください。</p>
 
                 <h3 class="defense-subheading">防衛パーティ切り出し位置</h3>
                 <p class="info">画像の幅・高さに対する割合です。デフォルトでは縦40～56%を切り出します。装備を映したくない場合は「防衛PT縦幅 Y割合」を小さくしてください。</p>
                 <div class="crop-settings-grid">
-                    <div class="crop-settings-item">
-                        <label for="defenseCropX">防衛PT開始位置X:</label>
-                        <div class="input-with-buttons">
-                            <button type="button" class="decrement-btn" data-target="defenseCropX">-</button>
-                            <input type="number" id="defenseCropX" value="5" min="0" max="95">
-                            <button type="button" class="increment-btn" data-target="defenseCropX">+</button>
-                        </div>
-                        <span class="unit">%</span>
-                    </div>
                     <div class="crop-settings-item">
                         <label for="defenseCropY">防衛PT開始位置Y:</label>
                         <div class="input-with-buttons">
                             <button type="button" class="decrement-btn" data-target="defenseCropY">-</button>
                             <input type="number" id="defenseCropY" value="40" min="0" max="95">
                             <button type="button" class="increment-btn" data-target="defenseCropY">+</button>
-                        </div>
-                        <span class="unit">%</span>
-                    </div>
-                    <div class="crop-settings-item">
-                        <label for="defenseCropWidth">防衛PT横幅 X割合:</label>
-                        <div class="input-with-buttons">
-                            <button type="button" class="decrement-btn" data-target="defenseCropWidth">-</button>
-                            <input type="number" id="defenseCropWidth" value="90" min="1" max="100">
-                            <button type="button" class="increment-btn" data-target="defenseCropWidth">+</button>
                         </div>
                         <span class="unit">%</span>
                     </div>
@@ -594,7 +567,7 @@
         <p>なおこのツールは、アップロードされた画像をサーバーに送信したり、収集したりすることはありません。すべての画像処理は、お使いのブラウザ内（JavaScript）で完結していますので、ご安心ください。また、このHTMLコードはGoogleのGeminiによって生成されました。</p>
         <div class="version-info">
             <p>最終更新日: 2026/08/31</p>
-            <p>バージョン: 1.3.0</p>
+            <p>バージョン: 1.3.1</p>
         </div>
     </div>
 
@@ -614,13 +587,10 @@
             const defenseStatsContainer = document.getElementById('defenseStatsContainer');
 
             // 切り出し設定のInput要素
-            const cropSxInput = document.getElementById('cropSx');
             const cropSOpponentYInput = document.getElementById('cropSOpponentY');
             const cropSSelfYInput = document.getElementById('cropSSelfY');
             const cropSHeightInput = document.getElementById('cropSHeight');
-            const defenseCropXInput = document.getElementById('defenseCropX');
             const defenseCropYInput = document.getElementById('defenseCropY');
-            const defenseCropWidthInput = document.getElementById('defenseCropWidth');
             const defenseCropHeightInput = document.getElementById('defenseCropHeight');
 
             let sortedFiles = [];
@@ -985,7 +955,7 @@
                 downloadLink.style.display = 'none';
 
                 // %値から実際のピクセル値を計算
-                const cropSxPercent = parseFloat(cropSxInput.value) / 100;
+                const cropSxPercent = 0.11;
                 const cropSOpponentYPercent = parseFloat(cropSOpponentYInput.value) / 100;
                 const cropSSelfYPercent = parseFloat(cropSSelfYInput.value) / 100;
                 const cropSHeightPercent = parseFloat(cropSHeightInput.value) / 100;
@@ -1005,9 +975,9 @@
                     .map(select => parseInt(select.value));
 
                 if (hasDefense) {
-                    const defenseXPercent = parseFloat(defenseCropXInput.value) / 100;
+                    const defenseXPercent = 0.05;
                     const defenseYPercent = parseFloat(defenseCropYInput.value) / 100;
-                    const defenseWidthPercent = parseFloat(defenseCropWidthInput.value) / 100;
+                    const defenseWidthPercent = 0.90;
                     const defenseHeightPercent = parseFloat(defenseCropHeightInput.value) / 100;
                     defenseCropDetails = {
                         sx: defenseImageDimensions.width * defenseXPercent,
