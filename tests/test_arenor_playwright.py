@@ -34,10 +34,15 @@ def main():
 
         defense_options = page.locator("#defenseOptions")
         assert not defense_options.evaluate("element => element.open")
+        assert defense_options.locator("summary").inner_text() == "ギルド大会用の防衛パーティを追加"
         defense_options.locator("summary").click()
         assert defense_options.evaluate("element => element.open")
         assert page.locator(".defense-stat-select").count() == 0
         assert page.locator("#defenseCommentInput").count() == 0
+        assert page.locator("#cropSx").count() == 0
+        assert page.locator("#defenseCropX").count() == 0
+        assert page.locator("#defenseCropWidth").count() == 0
+        assert page.locator("#cropSOpponentY").input_value() == "36"
         assert page.locator("#defenseCropY").input_value() == "40"
         assert page.locator("#defenseCropHeight").input_value() == "16"
         assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
