@@ -272,6 +272,93 @@
             font-size: 0.75rem; /* infoテキストのサイズをさらに小さく */
         }
 
+        .defense-options {
+            margin-top: 1.5rem;
+            border: 1px solid #cfd8e3;
+            border-radius: 8px;
+            background-color: #f9fbfd;
+            overflow: hidden;
+        }
+
+        .defense-options summary {
+            padding: 1rem;
+            color: #0056b3;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .defense-options[open] summary {
+            border-bottom: 1px solid #dfe6ee;
+        }
+
+        .defense-options-content {
+            padding: 1rem;
+        }
+
+        #defenseImageUpload {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 0.5rem;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #fff;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .defense-file-status {
+            min-height: 1.5rem;
+            margin: 0.4rem 0 0;
+            overflow-wrap: anywhere;
+        }
+
+        .secondary-button {
+            margin-top: 0.5rem;
+            padding: 0.55rem 0.8rem;
+            border: 1px solid #6c757d;
+            border-radius: 6px;
+            background-color: #fff;
+            color: #495057;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .defense-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 0.6rem;
+            margin-top: 0.5rem;
+        }
+
+        .defense-stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .defense-stat-item label {
+            font-size: 0.85rem;
+        }
+
+        .defense-stat-item select {
+            min-height: 2.75rem;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: #fff;
+            font-size: 1rem;
+        }
+
+        .defense-subheading {
+            margin: 1.25rem 0 0.4rem;
+            color: #333;
+            font-size: 1rem;
+        }
+
 
         #generateButton {
             background-color: #28a745;
@@ -425,6 +512,62 @@
             </div>
         </div>
 
+        <details id="defenseOptions" class="defense-options">
+            <summary>ギルド大会用の防衛パーティを画像に入れる</summary>
+            <div class="defense-options-content">
+                <label for="defenseImageUpload"><strong>防衛パーティ画像:</strong></label>
+                <input type="file" id="defenseImageUpload" accept="image/png, image/jpeg">
+                <p id="defenseFileStatus" class="info defense-file-status">画像は選択されていません。</p>
+                <button type="button" id="clearDefenseImageButton" class="secondary-button">防衛画像を解除</button>
+                <p class="info">※大会全体で使用した防衛パーティが表示されている画像を1枚選択してください。</p>
+
+                <h3 class="defense-subheading">防衛パーティ切り出し位置</h3>
+                <p class="info">画像の幅・高さに対する割合です。デフォルトでは縦40～56%を切り出します。装備を映したくない場合は「防衛PT縦幅 Y割合」を小さくしてください。</p>
+                <div class="crop-settings-grid">
+                    <div class="crop-settings-item">
+                        <label for="defenseCropX">防衛PT開始位置X:</label>
+                        <div class="input-with-buttons">
+                            <button type="button" class="decrement-btn" data-target="defenseCropX">-</button>
+                            <input type="number" id="defenseCropX" value="5" min="0" max="95">
+                            <button type="button" class="increment-btn" data-target="defenseCropX">+</button>
+                        </div>
+                        <span class="unit">%</span>
+                    </div>
+                    <div class="crop-settings-item">
+                        <label for="defenseCropY">防衛PT開始位置Y:</label>
+                        <div class="input-with-buttons">
+                            <button type="button" class="decrement-btn" data-target="defenseCropY">-</button>
+                            <input type="number" id="defenseCropY" value="40" min="0" max="95">
+                            <button type="button" class="increment-btn" data-target="defenseCropY">+</button>
+                        </div>
+                        <span class="unit">%</span>
+                    </div>
+                    <div class="crop-settings-item">
+                        <label for="defenseCropWidth">防衛PT横幅 X割合:</label>
+                        <div class="input-with-buttons">
+                            <button type="button" class="decrement-btn" data-target="defenseCropWidth">-</button>
+                            <input type="number" id="defenseCropWidth" value="90" min="1" max="100">
+                            <button type="button" class="increment-btn" data-target="defenseCropWidth">+</button>
+                        </div>
+                        <span class="unit">%</span>
+                    </div>
+                    <div class="crop-settings-item">
+                        <label for="defenseCropHeight">防衛PT縦幅 Y割合:</label>
+                        <div class="input-with-buttons">
+                            <button type="button" class="decrement-btn" data-target="defenseCropHeight">-</button>
+                            <input type="number" id="defenseCropHeight" value="16" min="1" max="100">
+                            <button type="button" class="increment-btn" data-target="defenseCropHeight">+</button>
+                        </div>
+                        <span class="unit">%</span>
+                    </div>
+                </div>
+
+                <h3 class="defense-subheading">防衛結果 Stats</h3>
+                <div id="defenseStatsContainer" class="defense-stats-grid"></div>
+                <p class="info">※0は不戦勝、10は防衛成功、160は完全突破です。</p>
+            </div>
+        </details>
+
         <div id="commentSection">
             <h2>4. ひとこと(任意)</h2>
             <textarea id="commentInput" placeholder="ここにコメントを入力してください"></textarea>
@@ -447,11 +590,11 @@
     <div class="author-info">
         <h3>作者 ( <a href="https://x.com/jmazeppa" target="_blank" rel="noopener noreferrer">@jmazeppa</a> ) より</h3>
         <p>”Tact Arenor”は、闘技場(Arena)を楽しむタクターという意味の造語です。</p>
-        <p>ギルド大会などの闘技場の攻めまとめ画像を簡単に作成するために作りましたが、防衛は人によって見せたいモノが変わる事もあり、ひとこと欄で勘弁してください。</p>
+        <p>ギルド大会などの闘技場の攻めまとめ画像を簡単に作成するために作りました。ギルド大会では防衛パーティも追加できます。装備を見せたくない場合は、「防衛PT縦幅 Y割合」で表示範囲を調整してください。</p>
         <p>なおこのツールは、アップロードされた画像をサーバーに送信したり、収集したりすることはありません。すべての画像処理は、お使いのブラウザ内（JavaScript）で完結していますので、ご安心ください。また、このHTMLコードはGoogleのGeminiによって生成されました。</p>
         <div class="version-info">
-            <p>最終更新日: 2025/06/07</p>
-            <p>バージョン: 1.2.1</p>
+            <p>最終更新日: 2026/08/31</p>
+            <p>バージョン: 1.3.0</p>
         </div>
     </div>
 
@@ -465,15 +608,25 @@
             const downloadLink = document.getElementById('downloadLink');
             const ctx = resultCanvas.getContext('2d');
             const commentInput = document.getElementById('commentInput');
+            const defenseImageUpload = document.getElementById('defenseImageUpload');
+            const defenseFileStatus = document.getElementById('defenseFileStatus');
+            const clearDefenseImageButton = document.getElementById('clearDefenseImageButton');
+            const defenseStatsContainer = document.getElementById('defenseStatsContainer');
 
             // 切り出し設定のInput要素
             const cropSxInput = document.getElementById('cropSx');
             const cropSOpponentYInput = document.getElementById('cropSOpponentY');
             const cropSSelfYInput = document.getElementById('cropSSelfY');
             const cropSHeightInput = document.getElementById('cropSHeight');
+            const defenseCropXInput = document.getElementById('defenseCropX');
+            const defenseCropYInput = document.getElementById('defenseCropY');
+            const defenseCropWidthInput = document.getElementById('defenseCropWidth');
+            const defenseCropHeightInput = document.getElementById('defenseCropHeight');
 
             let sortedFiles = [];
             let imageDimensions = { width: 0, height: 0 }; // 最初の画像の解像度を保持
+            let defenseFile = null;
+            let defenseImageDimensions = { width: 0, height: 0 };
 
             // --- 出力レイアウト設定 (これらは動的に設定) ---
             let FINAL_CANVAS_WIDTH = 0; // 入力画像の幅に基づいて動的に設定
@@ -511,7 +664,10 @@
             // -------------------------
 
             imageUpload.addEventListener('change', handleFiles);
+            defenseImageUpload.addEventListener('change', handleDefenseFile);
+            clearDefenseImageButton.addEventListener('click', clearDefenseFile);
             generateButton.addEventListener('click', generateImage);
+            createDefenseStatsInputs(0);
 
             // 増減ボタンのイベントリスナー設定
             document.querySelectorAll('.increment-btn, .decrement-btn').forEach(button => {
@@ -535,6 +691,93 @@
                     }
                 });
             });
+
+            function createDefenseStatsInputs(numImages) {
+                const previousValues = Array.from(document.querySelectorAll('.defense-stat-select'))
+                    .map(select => select.value);
+                const values = [0, 10];
+                for (let value = 100; value <= 160; value += 5) {
+                    values.push(value);
+                }
+
+                defenseStatsContainer.innerHTML = '';
+                if (!numImages) {
+                    const info = document.createElement('p');
+                    info.classList.add('info');
+                    info.textContent = '挑戦画像をアップロードすると、同じ試合数の入力欄が表示されます。';
+                    defenseStatsContainer.appendChild(info);
+                    return;
+                }
+
+                for (let index = 0; index < numImages; index++) {
+                    const item = document.createElement('div');
+                    item.classList.add('defense-stat-item');
+
+                    const label = document.createElement('label');
+                    label.setAttribute('for', `defenseStat-${index}`);
+                    label.textContent = getMatchName(index, numImages);
+
+                    const select = document.createElement('select');
+                    select.id = `defenseStat-${index}`;
+                    select.classList.add('defense-stat-select');
+                    values.forEach(value => {
+                        const option = document.createElement('option');
+                        option.value = value;
+                        option.textContent = `${value}P`;
+                        select.appendChild(option);
+                    });
+                    select.value = previousValues[index] || '160';
+
+                    item.appendChild(label);
+                    item.appendChild(select);
+                    defenseStatsContainer.appendChild(item);
+                }
+            }
+
+            function handleDefenseFile(event) {
+                const file = event.target.files[0];
+                defenseFile = null;
+                defenseImageDimensions = { width: 0, height: 0 };
+                defenseFileStatus.textContent = '画像は選択されていません。';
+                downloadLink.style.display = 'none';
+                resultCanvas.height = 0;
+
+                if (!file) return;
+                if (!['image/png', 'image/jpeg'].includes(file.type)) {
+                    alert('防衛パーティ画像はPNGまたはJPEGを選択してください。');
+                    defenseImageUpload.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                const img = new Image();
+                reader.onload = (e) => {
+                    img.onload = () => {
+                        defenseFile = file;
+                        defenseImageDimensions = { width: img.width, height: img.height };
+                        defenseFileStatus.textContent = `${file.name} (${img.width} × ${img.height})`;
+                    };
+                    img.onerror = () => {
+                        alert('防衛パーティ画像の読み込みに失敗しました。');
+                        defenseImageUpload.value = '';
+                    };
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => {
+                    alert('防衛パーティ画像の読み込みに失敗しました。');
+                    defenseImageUpload.value = '';
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function clearDefenseFile() {
+                defenseImageUpload.value = '';
+                defenseFile = null;
+                defenseImageDimensions = { width: 0, height: 0 };
+                defenseFileStatus.textContent = '画像は選択されていません。';
+                downloadLink.style.display = 'none';
+                resultCanvas.height = 0;
+            }
 
 
             function handleFiles(event) {
@@ -593,6 +836,7 @@
                         ROW_CONTENT_Y_START = HEADER_TEXT_Y_OFFSET + HEADER_TEXT_SIZE + 30;
 
                         updateUIForSettings(sortedFiles.length);
+                        createDefenseStatsInputs(sortedFiles.length);
                         generateButton.disabled = false;
                     };
                     img.onerror = () => {
@@ -692,9 +936,45 @@
                 });
             }
 
+            function wrapCanvasText(text, maxWidth) {
+                const lines = [];
+                const paragraphs = text.split(/\r?\n/);
+
+                paragraphs.forEach(paragraph => {
+                    if (!paragraph) {
+                        lines.push('');
+                        return;
+                    }
+
+                    let line = '';
+                    Array.from(paragraph).forEach(character => {
+                        const testLine = line + character;
+                        if (line && ctx.measureText(testLine).width > maxWidth) {
+                            lines.push(line);
+                            line = character;
+                        } else {
+                            line = testLine;
+                        }
+                    });
+                    if (line) lines.push(line);
+                });
+
+                return lines;
+            }
+
+            function getDefenseStatColor(value) {
+                if (value === 0 || value === 10) return 'rgb(0, 80, 255)';
+
+                const ratio = Math.max(0, Math.min(1, (value - 100) / 60));
+                const red = Math.round(255 * ratio);
+                const blue = Math.round(255 * (1 - ratio));
+                return `rgb(${red}, 0, ${blue})`;
+            }
+
             async function generateImage() {
                 const numImages = sortedFiles.length;
                 const userComment = commentInput.value.trim(); // ひとこと欄のテキストを取得
+                const hasDefense = Boolean(defenseFile && defenseImageDimensions.width && defenseImageDimensions.height);
 
                 if (numImages < 3 || numImages > 7 || imageDimensions.width === 0) {
                     alert('画像が正しく選択されていないか、画像の解像度が取得できていません。\n(3枚から7枚の画像を選択してください)');
@@ -717,6 +997,37 @@
                 const syOpponent = imageDimensions.height * cropSOpponentYPercent;
                 const sySelf = imageDimensions.height * cropSSelfYPercent;
 
+                let defenseCropDetails = null;
+                let defenseImageHeight = 0;
+                let defenseRowHeight = 0;
+                const defenseStatsFontSize = Math.max(12, Math.floor(POINTS_TEXT_SIZE * 0.9));
+                const defenseStats = Array.from(document.querySelectorAll('.defense-stat-select'))
+                    .map(select => parseInt(select.value));
+
+                if (hasDefense) {
+                    const defenseXPercent = parseFloat(defenseCropXInput.value) / 100;
+                    const defenseYPercent = parseFloat(defenseCropYInput.value) / 100;
+                    const defenseWidthPercent = parseFloat(defenseCropWidthInput.value) / 100;
+                    const defenseHeightPercent = parseFloat(defenseCropHeightInput.value) / 100;
+                    defenseCropDetails = {
+                        sx: defenseImageDimensions.width * defenseXPercent,
+                        sy: defenseImageDimensions.height * defenseYPercent,
+                        sWidth: defenseImageDimensions.width * defenseWidthPercent,
+                        sHeight: defenseImageDimensions.height * defenseHeightPercent
+                    };
+
+                    if (defenseXPercent + defenseWidthPercent > 1 || defenseYPercent + defenseHeightPercent > 1) {
+                        alert('防衛パーティ画像の切り出し範囲が画像の外にはみ出しています。');
+                        generateButton.disabled = false;
+                        generateButton.textContent = "画像を生成 ✨";
+                        return;
+                    }
+
+                    defenseImageHeight = DEST_ICON_STRIP_WIDTH * (defenseCropDetails.sHeight / defenseCropDetails.sWidth);
+                    const defenseTextHeight = defenseStatsFontSize * 1.4;
+                    defenseRowHeight = Math.max(defenseImageHeight, defenseTextHeight);
+                }
+
                 // 出力での相手・自分の画像高さも計算
                 const DEST_ICON_STRIP_HEIGHT = DEST_ICON_STRIP_WIDTH * (sHeight / sWidth);
                 const ROW_HEIGHT = DEST_ICON_STRIP_HEIGHT;
@@ -727,28 +1038,17 @@
                     ctx.font = `bold ${COMMENT_TEXT_SIZE}px "Meiryo", "メイリオ", sans-serif`; // ★コメントのフォントをメイリオに
                     // コメントの描画幅を調整: 左右のパディングを考慮した最大幅
                     const maxWidth = FINAL_CANVAS_WIDTH - (CANVAS_PADDING * 2);
-
-                    const words = userComment.split(' ');
-                    let line = '';
-                    
-                    for (let n = 0; n < words.length; n++) {
-                        let testLine = line + words[n] + ' ';
-                        let metrics = ctx.measureText(testLine);
-                        let testWidth = metrics.width;
-                        if (testWidth > maxWidth && n > 0) {
-                            commentLines.push(line.trim()); // 各行の末尾の空白を削除
-                            line = words[n] + ' ';
-                        } else {
-                            line = testLine;
-                        }
-                    }
-                    commentLines.push(line.trim()); // 最後の行も追加し、末尾の空白を削除
+                    commentLines = wrapCanvasText(userComment, maxWidth);
                     commentAreaDrawingHeight = commentLines.length * COMMENT_TEXT_SIZE * COMMENT_LINE_HEIGHT_FACTOR;
                 }
 
                 // 作成日の表示スペースとコメントスペースを確保するために、FINAL_CANVAS_HEIGHTを調整
                 // currentY は最後の行が描画された直後のY座標なので、そこからコメントの開始Y座標を計算
                 FINAL_CANVAS_HEIGHT = ROW_CONTENT_Y_START + (numImages * (ROW_HEIGHT + ROW_SPACING)) - ROW_SPACING; // 最後の行の下端まで
+                if (hasDefense) {
+                    FINAL_CANVAS_HEIGHT += COMMENT_AREA_MARGIN_AFTER_LAST_ROW;
+                    FINAL_CANVAS_HEIGHT += defenseRowHeight;
+                }
                 if (userComment) {
                     FINAL_CANVAS_HEIGHT += COMMENT_AREA_MARGIN_AFTER_LAST_ROW; // 最後の画像行とコメントの間の余白
                     FINAL_CANVAS_HEIGHT += commentAreaDrawingHeight; // コメントの実際の高さ
@@ -787,7 +1087,7 @@
                 ctx.fillText('挑戦パーティ', selfColX, HEADER_TEXT_Y_OFFSET);
 
                 ctx.textAlign = 'right';
-                ctx.fillText('獲得戦績', pointsColX, HEADER_TEXT_Y_OFFSET);
+                ctx.fillText('獲得戦績　', pointsColX, HEADER_TEXT_Y_OFFSET);
 
 
                 let currentY = ROW_CONTENT_Y_START;
@@ -801,7 +1101,7 @@
                         continue;
                     }
                     const pointsValue = parseInt(pointsInput.value);
-                    const pointsText = `${pointsValue}P`;
+                    const pointsText = `${pointsValue}P　`;
 
 
                     const cropOpponentDetails = { sx: sx, sy: syOpponent, sWidth: sWidth, sHeight: sHeight };
@@ -848,6 +1148,61 @@
                 }
                 // 最後の描画後の currentY は、最後の画像のY座標+高さ+行間になっているので、
                 // 最後の画像の底辺は currentY - ROW_SPACING です。
+
+                if (hasDefense) {
+                    const defenseY = (currentY - ROW_SPACING) + COMMENT_AREA_MARGIN_AFTER_LAST_ROW;
+                    const defenseDrawX = CANVAS_PADDING + MATCH_NAME_WIDTH + SPACE_BETWEEN_ELEMENTS;
+                    const defenseStatsStartX = defenseDrawX + DEST_ICON_STRIP_WIDTH + SPACE_BETWEEN_ELEMENTS;
+                    const defenseStatsRightPadding = CANVAS_PADDING * 2;
+                    const defenseStatsAreaWidth = FINAL_CANVAS_WIDTH - defenseStatsRightPadding - defenseStatsStartX;
+                    const defenseStatsCenterX = defenseStatsStartX + defenseStatsAreaWidth / 2;
+
+                    ctx.fillStyle = '#333';
+                    ctx.font = `bold ${HEADER_TEXT_SIZE * 0.9}px "Hiragino Mincho ProN", "MS Mincho", serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('防衛パーティ', matchNameColX, defenseY + defenseRowHeight / 2);
+
+                    try {
+                        const defenseImg = await cropAndLoadImage(defenseFile, defenseCropDetails);
+                        ctx.drawImage(defenseImg, defenseDrawX, defenseY, DEST_ICON_STRIP_WIDTH, defenseImageHeight);
+                    } catch (error) {
+                        console.error('Error processing defense image:', error);
+                        ctx.fillStyle = 'red';
+                        ctx.font = '14px Arial';
+                        ctx.textAlign = 'left';
+                        ctx.fillText('防衛画像の処理エラー', defenseDrawX, defenseY + defenseRowHeight / 2);
+                    }
+
+                    ctx.font = `bold ${defenseStatsFontSize}px "Hiragino Mincho ProN", "MS Mincho", serif`;
+                    const separator = '-';
+                    const statParts = [];
+                    defenseStats.forEach((value, index) => {
+                        statParts.push({ text: String(value), color: getDefenseStatColor(value) });
+                        if (index < defenseStats.length - 1) {
+                            statParts.push({ text: separator, color: '#777' });
+                        }
+                    });
+                    const totalStatsWidth = statParts.reduce((width, part) => width + ctx.measureText(part.text).width, 0);
+                    const statsScaleX = Math.min(1, defenseStatsAreaWidth / totalStatsWidth);
+                    const renderedStatsWidth = totalStatsWidth * statsScaleX;
+                    const statsStartX = defenseStatsCenterX - renderedStatsWidth / 2;
+                    const statsY = defenseY + defenseRowHeight / 2;
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.save();
+                    ctx.translate(statsStartX, statsY);
+                    ctx.scale(statsScaleX, 1);
+                    let statsX = 0;
+                    statParts.forEach(part => {
+                        ctx.fillStyle = part.color;
+                        ctx.fillText(part.text, statsX, 0);
+                        statsX += ctx.measureText(part.text).width;
+                    });
+                    ctx.restore();
+
+                    currentY = defenseY + defenseRowHeight + ROW_SPACING;
+                }
 
                 // ひとことコメントの描画
                 if (userComment && commentLines.length > 0) {
