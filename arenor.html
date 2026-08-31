@@ -131,8 +131,29 @@
         .row-setting .points-setting {
             display: flex; /* 横並びにする */
             align-items: center;
+            gap: 0.5rem;
             flex-shrink: 0; /* 縮小させない */
             white-space: nowrap; /* 改行しない */
+        }
+
+        .row-setting .secret-setting {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            min-height: 2.2rem;
+            margin-right: 0;
+            cursor: pointer;
+        }
+
+        .row-setting .secret-setting input {
+            width: 1.15rem;
+            height: 1.15rem;
+            margin: 0;
+        }
+
+        .row-setting .secret-setting:has(input:disabled) {
+            color: #777;
+            cursor: not-allowed;
         }
 
         .row-setting label {
@@ -249,6 +270,40 @@
             font-size: 0.85rem; /* remに変更 */
             color: #555;
             margin-left: 0.5rem; /* 単位とボタンの間隔 */
+        }
+
+        .party-visibility-setting {
+            min-width: 0;
+            margin: 0;
+        }
+
+        .party-visibility-setting legend {
+            padding: 0;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .party-visibility-options {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: auto;
+        }
+
+        .party-visibility-options label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            min-height: 2.2rem;
+            margin-right: 0;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .party-visibility-options input[type="radio"] {
+            width: 1.2rem;
+            height: 1.2rem;
+            margin: 0;
         }
 
         /* ひとこと入力欄 */
@@ -465,7 +520,8 @@
     </div>
 
     <div class="settings-section card">
-        <h2>2. 各試合の戦績ポイント設定</h2>
+        <h2>2. 各試合の戦績/PT表示設定</h2>
+        <p class="info">「秘密」を選ぶと、その試合の挑戦パーティを「？？？」で隠します。zzzは自動的に秘密になります。</p>
         <div id="rowsContainer">
             <p class="info">画像をアップロードすると、ここに設定が表示されます。</p>
         </div>
@@ -501,6 +557,13 @@
                 </div>
                 <span class="unit">%</span>
             </div>
+            <fieldset class="crop-settings-item party-visibility-setting">
+                <legend>挑戦パーティ:</legend>
+                <div class="party-visibility-options">
+                    <label><input type="radio" name="selfPartyVisibility" value="show" checked>表示</label>
+                    <label><input type="radio" name="selfPartyVisibility" value="hide">非表示</label>
+                </div>
+            </fieldset>
         </div>
 
         <details id="defenseOptions" class="defense-options">
@@ -567,7 +630,7 @@
         <p>なおこのツールは、アップロードされた画像をサーバーに送信したり、収集したりすることはありません。すべての画像処理は、お使いのブラウザ内（JavaScript）で完結していますので、ご安心ください。また、このHTMLコードはGoogleのGeminiによって生成されました。</p>
         <div class="version-info">
             <p>最終更新日: 2026/08/31</p>
-            <p>バージョン: 1.3.1</p>
+            <p>バージョン: 1.3.4</p>
         </div>
     </div>
 
@@ -665,7 +728,7 @@
             function createDefenseStatsInputs(numImages) {
                 const previousValues = Array.from(document.querySelectorAll('.defense-stat-select'))
                     .map(select => select.value);
-                const values = [0, 10];
+                const values = ['zzz', 0, 10];
                 for (let value = 100; value <= 160; value += 5) {
                     values.push(value);
                 }
@@ -693,7 +756,7 @@
                     values.forEach(value => {
                         const option = document.createElement('option');
                         option.value = value;
-                        option.textContent = `${value}P`;
+                        option.textContent = value === 'zzz' ? 'zzz' : `${value}P`;
                         select.appendChild(option);
                     });
                     select.value = previousValues[index] || '160';
@@ -883,7 +946,12 @@
                     const select = document.createElement('select');
                     select.id = `points-${index}`;
 
-                    // 10Pを最初の選択肢として追加
+                    const optionZzz = document.createElement('option');
+                    optionZzz.value = "zzz";
+                    optionZzz.textContent = "zzz";
+                    select.appendChild(optionZzz);
+
+                    // 10Pを選択肢へ追加
                     const option10 = document.createElement('option');
                     option10.value = "10";
                     option10.textContent = "10P";
@@ -900,6 +968,28 @@
 
                     pointsSettingDiv.appendChild(label);
                     pointsSettingDiv.appendChild(select);
+
+                    const secretLabel = document.createElement('label');
+                    secretLabel.classList.add('secret-setting');
+                    secretLabel.setAttribute('for', `secret-${index}`);
+
+                    const secretCheckbox = document.createElement('input');
+                    secretCheckbox.type = 'checkbox';
+                    secretCheckbox.id = `secret-${index}`;
+                    secretCheckbox.classList.add('secret-checkbox');
+
+                    const secretText = document.createElement('span');
+                    secretText.textContent = '秘密';
+
+                    secretLabel.appendChild(secretCheckbox);
+                    secretLabel.appendChild(secretText);
+                    pointsSettingDiv.appendChild(secretLabel);
+
+                    select.addEventListener('change', () => {
+                        const isSleepResult = select.value === 'zzz';
+                        secretCheckbox.checked = isSleepResult;
+                        secretCheckbox.disabled = isSleepResult;
+                    });
                     rowDiv.appendChild(pointsSettingDiv);
 
                     rowsContainer.appendChild(rowDiv);
@@ -933,9 +1023,12 @@
             }
 
             function getDefenseStatColor(value) {
-                if (value === 0 || value === 10) return 'rgb(0, 80, 255)';
+                if (value === 'zzz') return '#777';
 
-                const ratio = Math.max(0, Math.min(1, (value - 100) / 60));
+                const numericValue = Number(value);
+                if (numericValue === 0 || numericValue === 10) return 'rgb(0, 80, 255)';
+
+                const ratio = Math.max(0, Math.min(1, (numericValue - 100) / 60));
                 const red = Math.round(255 * ratio);
                 const blue = Math.round(255 * (1 - ratio));
                 return `rgb(${red}, 0, ${blue})`;
@@ -945,6 +1038,10 @@
                 const numImages = sortedFiles.length;
                 const userComment = commentInput.value.trim(); // ひとこと欄のテキストを取得
                 const hasDefense = Boolean(defenseFile && defenseImageDimensions.width && defenseImageDimensions.height);
+                const showSelfParty = document.querySelector('input[name="selfPartyVisibility"]:checked').value === 'show';
+                const outputCanvasWidth = showSelfParty
+                    ? FINAL_CANVAS_WIDTH
+                    : FINAL_CANVAS_WIDTH - DEST_ICON_STRIP_WIDTH - SPACE_BETWEEN_ELEMENTS;
 
                 if (numImages < 3 || numImages > 7 || imageDimensions.width === 0) {
                     alert('画像が正しく選択されていないか、画像の解像度が取得できていません。\n(3枚から7枚の画像を選択してください)');
@@ -972,7 +1069,7 @@
                 let defenseRowHeight = 0;
                 const defenseStatsFontSize = Math.max(12, Math.floor(POINTS_TEXT_SIZE * 0.9));
                 const defenseStats = Array.from(document.querySelectorAll('.defense-stat-select'))
-                    .map(select => parseInt(select.value));
+                    .map(select => select.value);
 
                 if (hasDefense) {
                     const defenseXPercent = 0.05;
@@ -1007,7 +1104,7 @@
                 if (userComment) {
                     ctx.font = `bold ${COMMENT_TEXT_SIZE}px "Meiryo", "メイリオ", sans-serif`; // ★コメントのフォントをメイリオに
                     // コメントの描画幅を調整: 左右のパディングを考慮した最大幅
-                    const maxWidth = FINAL_CANVAS_WIDTH - (CANVAS_PADDING * 2);
+                    const maxWidth = outputCanvasWidth - (CANVAS_PADDING * 2);
                     commentLines = wrapCanvasText(userComment, maxWidth);
                     commentAreaDrawingHeight = commentLines.length * COMMENT_TEXT_SIZE * COMMENT_LINE_HEIGHT_FACTOR;
                 }
@@ -1028,7 +1125,7 @@
                 FINAL_CANVAS_HEIGHT += CANVAS_PADDING; // 下部のパディング
 
 
-                resultCanvas.width = FINAL_CANVAS_WIDTH;
+                resultCanvas.width = outputCanvasWidth;
                 resultCanvas.height = FINAL_CANVAS_HEIGHT;
 
                 ctx.fillStyle = 'white';
@@ -1050,11 +1147,13 @@
 
                 // 獲得戦績のX座標を調整（右寄せで、Pの位置が縦に揃うように）
                 // FINAL_CANVAS_WIDTHから右側のパディングを引いた位置にテキストの右端を合わせる
-                const pointsColX = FINAL_CANVAS_WIDTH - CANVAS_PADDING;
+                const pointsColX = outputCanvasWidth - CANVAS_PADDING;
 
                 ctx.textAlign = 'center';
                 ctx.fillText('相手の防衛パーティ', opponentColX, HEADER_TEXT_Y_OFFSET);
-                ctx.fillText('挑戦パーティ', selfColX, HEADER_TEXT_Y_OFFSET);
+                if (showSelfParty) {
+                    ctx.fillText('挑戦パーティ', selfColX, HEADER_TEXT_Y_OFFSET);
+                }
 
                 ctx.textAlign = 'right';
                 ctx.fillText('獲得戦績　', pointsColX, HEADER_TEXT_Y_OFFSET);
@@ -1070,8 +1169,10 @@
                         currentY += ROW_HEIGHT + ROW_SPACING;
                         continue;
                     }
-                    const pointsValue = parseInt(pointsInput.value);
-                    const pointsText = `${pointsValue}P　`;
+                    const pointsValue = pointsInput.value;
+                    const pointsText = pointsValue === 'zzz' ? 'zzz　' : `${pointsValue}P　`;
+                    const secretInput = document.getElementById(`secret-${i}`);
+                    const shouldMaskSelfParty = pointsValue === 'zzz' || Boolean(secretInput && secretInput.checked);
 
 
                     const cropOpponentDetails = { sx: sx, sy: syOpponent, sWidth: sWidth, sHeight: sHeight };
@@ -1079,7 +1180,9 @@
 
                     try {
                         const opponentImg = await cropAndLoadImage(file, cropOpponentDetails);
-                        const selfImg = await cropAndLoadImage(file, cropSelfDetails);
+                        const selfImg = showSelfParty && !shouldMaskSelfParty
+                            ? await cropAndLoadImage(file, cropSelfDetails)
+                            : null;
 
                         // 「予選 第X試合」「本戦 第X試合」の描画
                         ctx.fillStyle = '#333';
@@ -1097,7 +1200,15 @@
 
                         // 挑戦パーティの描画位置を調整
                         const selfDrawX = opponentDrawX + DEST_ICON_STRIP_WIDTH + SPACE_BETWEEN_ELEMENTS;
-                        ctx.drawImage(selfImg, selfDrawX, currentY, DEST_ICON_STRIP_WIDTH, DEST_ICON_STRIP_HEIGHT);
+                        if (selfImg) {
+                            ctx.drawImage(selfImg, selfDrawX, currentY, DEST_ICON_STRIP_WIDTH, DEST_ICON_STRIP_HEIGHT);
+                        } else if (showSelfParty && shouldMaskSelfParty) {
+                            ctx.fillStyle = '#777';
+                            ctx.font = `bold ${POINTS_TEXT_SIZE}px "Hiragino Mincho ProN", "MS Mincho", serif`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('？？？', selfDrawX + DEST_ICON_STRIP_WIDTH / 2, currentY + ROW_HEIGHT / 2);
+                        }
 
                         ctx.textAlign = 'right';
                         ctx.textBaseline = 'middle';
@@ -1124,7 +1235,7 @@
                     const defenseDrawX = CANVAS_PADDING + MATCH_NAME_WIDTH + SPACE_BETWEEN_ELEMENTS;
                     const defenseStatsStartX = defenseDrawX + DEST_ICON_STRIP_WIDTH + SPACE_BETWEEN_ELEMENTS;
                     const defenseStatsRightPadding = CANVAS_PADDING * 2;
-                    const defenseStatsAreaWidth = FINAL_CANVAS_WIDTH - defenseStatsRightPadding - defenseStatsStartX;
+                    const defenseStatsAreaWidth = outputCanvasWidth - defenseStatsRightPadding - defenseStatsStartX;
                     const defenseStatsCenterX = defenseStatsStartX + defenseStatsAreaWidth / 2;
 
                     ctx.fillStyle = '#333';
@@ -1206,7 +1317,7 @@
 
                 // 「Created onYYYY/MM/DD」形式
                 const createdDateString = `Created on ${year}/${month}/${day}`;
-                ctx.fillText(createdDateString, FINAL_CANVAS_WIDTH - CANVAS_PADDING, FINAL_CANVAS_HEIGHT - CANVAS_PADDING);
+                ctx.fillText(createdDateString, outputCanvasWidth - CANVAS_PADDING, FINAL_CANVAS_HEIGHT - CANVAS_PADDING);
 
                 // ファイル名に日時を追加
                 const hours = today.getHours().toString().padStart(2, '0');
@@ -1256,8 +1367,11 @@
             }
 
             function getPointColor(pointsValue) {
+                if (pointsValue === 'zzz') return '#777';
+
+                const numericPoints = Number(pointsValue);
                 // 現状のカラーロジックを維持
-                if (pointsValue === 10) return 'red';
+                if (numericPoints === 10) return 'red';
 
                 const orange = { r: 255, g: 165, b: 0 };
                 const blue = { r: 0, g: 0, b: 255 };
@@ -1266,7 +1380,7 @@
                 const minPoints = 100;
                 const maxPoints = 160;
 
-                const clampedPoints = Math.max(minPoints, Math.min(maxPoints, pointsValue));
+                const clampedPoints = Math.max(minPoints, Math.min(maxPoints, numericPoints));
 
                 let r, g, b;
 
